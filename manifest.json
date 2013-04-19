@@ -1,0 +1,17 @@
+{
+    "manifest_version": 2,
+    "content_scripts": [ {
+        "exclude_globs":    [  ],
+        "include_globs":    [ "*" ],
+        "css":               [ "css/libdeluxe.css" ],
+        "js":               [ "js/jquery.min.js","js/TweenMax.min.js","js/recognition.js","LibraryDeluxe.user.js" ],
+        "matches":          [   "http://tokyotosho.info/*",
+                                "https://tokyotosho.info/*"
+                            ],
+        "run_at": "document_end"
+    } ],
+    "converted_from_user_script": true,
+    "description":  "Makes Tokyotosho into the most advanced Library for Japanese Media!",
+    "name":         "Library Deluxe",
+    "version":      "1"
+}
