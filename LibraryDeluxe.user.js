@@ -43,21 +43,12 @@ String.prototype.distanceTo = function(a){
 	return matrix[this.length][a.length];
 };
 
-function isOnScreen(elem){
-    var docViewTop = $(window).scrollTop();
-    var docViewBottom = docViewTop + $(window).height();
-
-    var elemTop = $(elem).offset().top;
-    var elemBottom = elemTop + $(elem).height();
-    // TODO: return overScreen, onScreen, underScreen
-    return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
-}
 
 
 /* --------------------------------------------------------
  * Getting the TokyoTosho list of the current page
  * ------------------------------------------------------ */
-function getTTlist(from){
+function getTTlist(from){	// prepared for ajax requests
 	var ttlist = [];
 	$('.listing tr',from).each(function(){
 		var top = $(this).find('.desc-top'),
@@ -70,8 +61,8 @@ function getTTlist(from){
 			var ttItem = {
 				file 		: top.find('a:last').html(),
 				link 		: top.find('a:last').attr("href"),
-				category 	: $(this).attr('class').replace("shade ",""),
-				web 		: web.html()
+				web 		: web.html(),
+				category 	: $(this).attr('class').replace("shade","").replace(" ","").replace('category_','cat_')
 			};
 			ttlist.push(ttItem);
 		} 
@@ -82,6 +73,20 @@ function getTTlist(from){
 	});
 	return ttlist;
 }
+// 1 - anime *
+// 10 - non-english *
+// 3 - manga ^
+// 11 - batch *
+// 8 - drama
+// 2 - music
+// 9 - music video
+// 7 - raws *
+// 4 - hentai *
+// 12 - hentai (anime) *
+// 13 - hentai (manga) ^
+// 14 - hentai (game)
+// 15 - jav
+// 5 - other
 
 /* --------------------------------------------------------
  * DOM Manipulations from here on
@@ -94,75 +99,176 @@ if(~window.location.toString().indexOf("#noStyle")){
 }
 
 
-// 1 - anime *
-// 10 - non-english *
-// 3 - manga ^
-// 8 - drama
-// 2 - music
-// 9 - music video
-// 7 - raws *
-// 4 - hentai *
-// 12 - hentai (anime) *
-// 13 - hentai (manga) ^
-// 14 - hentai (game)
-// 11 - batch *
-// 15 - jav
-// 5 - other
 
 $('head').append('<link rel="stylesheet" href="http://www.thekohrs.net/mal/tt/libdeluxe.css" type="text/css" />');
 
-$('body>p.footer').before('<div id="header"></div><div id="wrapper"><section id="left_panel"><div class="nav"><ul class="cat"></ul></div><div class="nav"><ul class="hot"></ul></div></section><section id="libview"></section><section id="right_panel"></section><div class="clearfix"></div></div>');
-$('div.nav>ul.cat')
-	.append('<li class="category_all"><a href="?">All</a></li>')
-	.append('<li class="category_1"><a href="?cat=1">Anime</a></li>')
-	.append('<li class="category_10"><a href="?cat=10">Non-English</a></li>')
-	.append('<li class="category_3"><a href="?cat=3">Manga</a></li>')
-	.append('<li class="category_8"><a href="?cat=8">Drama</a></li>')
-	.append('<li class="category_2"><a href="?cat=2">Music</a></li>')
-	.append('<li class="category_9"><a href="?cat=9">Music Video</a></li>')
-	.append('<li class="category_7"><a href="?cat=7">Raws</a></li>')
-	.append('<li class="category_4"><a href="?cat=4">Hentai</a></li>')
-	.append('<li class="category_12"><a href="?cat=12">Hentai (Anime)</a></li>')
-	.append('<li class="category_13"><a href="?cat=13">Hentai (Manga)</a></li>')
-	.append('<li class="category_14"><a href="?cat=14">Hentai (Games)</a></li>')
-	.append('<li class="category_11"><a href="?cat=11">Batch</a></li>')
-	.append('<li class="category_15"><a href="?cat=15">JAV</a></li>')
-	.append('<li class="category_5"><a href="?cat=5">Other</a></li>');
+$('body>p.footer').before( 
+	"<div id='header'>\
+			<div class='searchfield'>\
+				<form name='loginBox' action='search.php' method='get' accept-charset='utf-8'>\
+					<input  id='type' type='text' name='type' style='display:none;' />\
+					<input  id='search' type='text' name='terms' placeholder='Search' />\
+					<input type='submit' style='position: absolute; left: -9999px; width: 1px; height: 1px;' />\
+				</form>\
+			</div>\
+	</div>\
+	<div id='wrapper'>\
+		<section id='left_panel'>\
+			<div class='nav'>\
+				<ul class='cat'></ul>\
+			</div>\
+		</section>\
+		<section id='libview'></section>\
+		<section id='right_panel'>\
+			<div class='nav'>\
+				<ul class='hot'></ul>\
+			</div>\
+		</section>\
+		<div class='clearfix'></div>\
+	</div>\
+	<div class='overlay' title='Close' style='display:none'>\
+		<iframe id='website' src='' sandbox='allow-same-origin'></iframe>\
+	</div>"
+);
+
+$('div.nav>ul.cat').append(
+	'<li class="cat_all"><a href="/?">All</a></li>\
+	 <li class="cat_1"><a href="/?cat=1">Anime</a></li>\
+	 <li class="cat_10"><a href="/?cat=10">Non-English</a></li>\
+	 <li class="cat_7"><a href="/?cat=7">Raws</a></li>\
+	 <li class="cat_3"><a href="/?cat=3">Manga</a></li>\
+	 <li class="cat_8"><a href="/?cat=8">Drama</a></li>\
+	 <li class="cat_2"><a href="/?cat=2">Music</a></li>\
+	 <li class="cat_9"><a href="/?cat=9">M-Video</a></li>\
+	 <li class="cat_11"><a href="/?cat=11">Batch</a></li>\
+	 <li class="cat_4"><a href="/?cat=4">Hentai</a></li>\
+	 <li class="cat_12"><a href="/?cat=12">H-Anime</a></li>\
+	 <li class="cat_13"><a href="/?cat=13">H-Manga</a></li>\
+	 <li class="cat_14"><a href="/?cat=14">H-Games</a></li>\
+	 <li class="cat_15"><a href="/?cat=15">JAV</a></li>\
+	 <li class="cat_5"><a href="/?cat=5">Other</a></li>'
+);
 
 
 var libview = $('#libview');
 var collection = {};
 loadCollection();
 
-$(document).ready(function(){
-	var ttlist = getTTlist($('body'));
-	//spawnTiles(ttlist);
-	if(!window.localStorage.getItem("skip_opening")){
+if(window.localStorage.getItem("skip_opening")){
+	initInterface(false);
+	$(document).ready(function() {
+		spawnTiles(getTTlist(document.body));
+	});
+}
+else {
+
+	$(document).ready(function(){
+		var ttlist = getTTlist(document.body);
 		var openingSequence = new TimelineLite({onComplete:initInterface, onCompleteParams:[ttlist]});
 		openingSequence.append(TweenMax.to($('#main'),1,{width:1140}));
 		openingSequence.append(TweenMax.to($('#main'),1,{opacity:0}));
 		openingSequence.append(TweenMax.to($('body'),1,{'background-color':'#eee'}),-1);
+	});
+}
+
+
+/*
+ * Eventlisteners
+ */
+$(window).scroll(function () {
+	var i = 0;
+	$('#libview .waitForAnimation').each(function(){
+		if(isOnScreen(this)){
+			$(this).removeClass('waitForAnimation');
+			TweenMax.from($(this),.5,{ 
+								delay: i *.2,
+								opacity:0, 
+								//rotation:(posCount%2>0? -30: 30),
+								//x:(posCount%2>0? 50: -50),
+								y:200
+		});
+		i++;
+		}
+	});
+});
+var searchLength=0;
+$('#search').focus(function(){
+	$(this).attr('placeholder','');
+}).blur(function(){
+	$(this).attr('placeholder','Search');
+}).change(function(){
+	console.log($(this).val());
+}).keyup(function(e){
+	var type,n; 
+	if(searchLength===0 && e.which===8){
+		$('#type').val('');
+		$(this).attr('class','');
+	} else if(n= $(this).val().match(/ ?[@!#](\w*)$/i)){
+		switch(n[1].toUpperCase()){
+			case 'ALL': 		type = 'all';	break;
+			case 'ANIME':		type = 1; 	break;
+			case 'NON-ENGLISH':type = 10;	break;	
+			case 'RAWS':		type = 7;	break;	
+			case 'MANGA':		type = 3;	break;	
+			case 'DRAMA':		type = 8;	break;	
+			case 'MUSIC':		type = 2;	break;	
+			case 'MVIDEO':		type = 9;	break;	
+			case 'BATCH':		type = 11;	break;	
+			case 'HENTAI':		type = 4;	break;	
+			case 'H-ANIME':		type = 12;	break;	
+			case 'H-MANGA':		type = 13;	break;	
+			case 'H-GAME':		type = 14;	break;	
+			case 'JAV':			type = 15;	break;	
+			case 'OTHER':		type = 5;	break;
+		}
+		if(type){
+			$('#type').val(type);
+			$(this).val($(this).val().replace(n[0],''));
+			$(this).attr('class','');
+			$(this).addClass('cat_'+type);
+		}
 	}
-	else {
-		initInterface(ttlist);
-	}
+	searchLength = $(this).val().length;
+});
+$('.searchfield>form').submit(function(e){
+	console.log('Submitting: '+$(this).serialize());
+	//return false;
 });
 
+/**
+ * Functions
+ */
+
+function isOnScreen(elem){
+	var docViewTop = $(window).scrollTop();
+	var docViewBottom = docViewTop + $(window).height();
+
+	var elemTop = $(elem).offset().top;
+	var elemBottom = elemTop + $(elem).height();
+	// TODO: return overScreen, onScreen, underScreen
+	return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
+}
+
 function initInterface(list){
-	showOpening(true);
+	skipOpening(true);
 	TweenMax.from($('#header'),1,{opacity:0});
+	TweenMax.from($('#wrapper'),1,{opacity:0});
 	$("body").addClass('init');
-	$("#main>h1").appendTo('#header');
-	$("#main>div.centertext").appendTo('#header');
-	$("#main>h3").appendTo('#header');
+	$("#header")
+		.append($("#main>h1"))
+		.append($("#main>div.centertext"))
+		.append($("#main>h3"))
+		.append($(".searchfield"));
+	
 	$('.dcenter>a[href^="search.php?terms="]').each(function(){
 		$("<li></li>").append(this).appendTo('div.nav>ul.hot');
 	});
 
-	spawnTiles(list);
+	if(list)
+		spawnTiles(list);
 }
 
-function showOpening(bool){
+function skipOpening(bool){
 	window.localStorage.setItem("skip_opening", bool);
 }
 
@@ -184,20 +290,24 @@ function spawnTiles(list){
 				time_ago = date;
 				if(date=="sec")			$(libview).append("<div class='time_ago'>~ Within this Minute ~</div>");
 				else if(date=="min")	$(libview).append("<div class='time_ago'>~ Just Now ~</div>");
-				else					$(libview).append("<div class='time_ago'>~ "+t.meta.date.replace('hr','hour')+" ~</div>");
+				else					$(libview).append("<div class='time_ago'>~ "+t.meta.date.replace('hr','hour').replace('Date: ',"")+" ~</div>");
 				posCount = 0;
 			}
 
-			// Lets build Tiles!
-			var tile = $('<div class="tile" data-name="'+hashCode+'"></div>').addClass(t.category)
-					.append('<img class="thumb" width="50">')
-					.append('<h2 class="title"><a href="'+t.link+'" title="'+a.filename+'">'+a.title+'</a></h2>')
-					.append('<h3 class="group">'+(a.group ? a.group : '[uknown group]')+'</h3>')
-					.append('<div class="ribbon"></div>')
-					.append('<div class="comment">'+t.meta.comment+'</div>')
-					.append('<div class="meta"></div>');
+			var tile = $(
+			"<div class='tile "+t.category+"' data-name='"+hashCode+"'>\
+				<img class='thumb' width='50' />\
+				<h2 class='title'>\
+					<a href='"+t.link+"' title='"+a.filename+"'>"+a.title+"</a>\
+				</h2>\
+				<h3 class='group'>"+(a.group ? a.group : "[uknown group]")+"</h3>\
+				<div class='comment'>"+t.meta.comment+"</div>\
+				<div class='ribbon'></div>\
+				<div class='meta'></div>\
+			</div>");
 
-			// in case of episode, add it to the title
+
+			// insert optional stuff if they are available
 			if(a.episode) 
 				tile.find(".title>a").append(' <span class="ep">'+a.episode+'</span>');
 
@@ -232,7 +342,16 @@ function spawnTiles(list){
 			if(a.version != undefined)
 				tile.find('.ribbon').append("<div class='version'>"+a.version+"</div>");
 
-			
+
+			// open Nyaa tracker in iframe
+			if(t.link.indexOf('nyaa.eu/')>-1){
+				$('.title>a',tile).bind('click',function(e){
+					if(e.which==1){ 
+						e.preventDefault();
+						openIframe($(this).attr('href'));
+					}
+				});
+			}
 
 			//clearfix
 			$(tile).append("<div class='clearfix'></div>");
@@ -281,23 +400,6 @@ function spawnTiles(list){
 		}
 	};
 }
-
-$(window).scroll(function () {
-	var i = 0;
-	$('#libview .waitForAnimation').each(function(){
-		if(isOnScreen(this)){
-			$(this).removeClass('waitForAnimation');
-			TweenMax.from($(this),.5,{ 
-								delay: i *.2,
-								opacity:0, 
-								//rotation:(posCount%2>0? -30: 30),
-								//x:(posCount%2>0? 50: -50),
-								y:200
-		});
-		i++;
-		}
-	});
-});
 
 function ttmetaParse(meta){
 	var a = meta.split(" | Comment: ");
@@ -368,6 +470,12 @@ function searchMalData(anime,cb){
 		result.data.image_url = result.data.image_url.replace(/t(\.[jpg|png|gif]{3})$/i, "$1");
 		cb(result);
 	});
+}
+
+function openIframe(url){
+	$('.overlay').show();
+	$('.overlay>#website').attr('src',url);
+	$('.overlay').click(function(){$(this).hide();});
 }
 
 function saveCollection(){

@@ -20,7 +20,7 @@ body.init > #main { display: none; }
 	text-shadow: -1px 1px 1px #fff;
 }
 
-/* #LEFT_PANEL
+/* #LEFT_PANEL & #RIGHT_PANEL
  * ----------------------------------------------------------- */
 #left_panel, #right_panel{
 	width: 17%;
@@ -29,20 +29,31 @@ body.init > #main { display: none; }
 	padding-top: 56px;
 }
 
-.nav li a {
+.nav {
+	font-size: 9pt;
+	margin: 0 10px;
+	margin-bottom: 20px;
+	max-width: 140px;
+}
+
+.nav a {
 	padding: 0 4px;
 	margin-bottom: 2px;
 	display: block;
 	font-size: 12px;
-	border-width: 0 0 0 3px;
 	border-style: solid;
 	border-color: #bbb;
 	color: #bbb;
 }
+#left_panel .nav {margin-left: auto;}
+#left_panel .nav a {border-width: 0 3px 0 0; text-align: right;}
+#right_panel .nav a {border-width: 0 0 0 3px;}
 
-.nav li a:hover {
+.nav a:hover {
 	background-color: #bbb;
 	color: #fff;
+	text-decoration: none;
+	text-shadow:1px -1px 1px #aaa;
 }
 
 div.nav>ul.cat>.selected>a {
@@ -51,10 +62,30 @@ div.nav>ul.cat>.selected>a {
 	background: rgb(206, 206, 206);
 }
 
-.nav {
-	font-size: 9pt;
-	margin-bottom: 20px;
-	max-width: 140px;
+.searchfield {
+max-width: 1140px;
+width: 100%;
+text-align: center;
+}
+
+#search {
+max-width: 285px;
+width: 100%;
+border-radius: 7px;
+background-color: rgb(231, 231, 231);
+border-style: none;
+font-size: 15px;
+padding: 4px 2%;
+text-align: center;
+font-family: georgia;
+color: #999;
+font-weight: bold;
+border-left: 4px solid;
+border-right: 4px solid;
+}
+
+#search:focus{
+	background-color: #fff;
 }
 
 /* #LIBVIEW
@@ -64,6 +95,7 @@ div.nav>ul.cat>.selected>a {
 	display: block;
 	width: 66%;
 	float:left;
+	text-align: center;
 }
 
 /* .TILE
@@ -72,11 +104,14 @@ div.nav>ul.cat>.selected>a {
 	background: #fff;
 	border-left: 5px solid;
 	box-shadow: -2px 1px 5px rgb(190, 190, 190);
-	float: left;
-	margin: 12px;
-	padding: 5px 6px;
-	width: 44%;
+	display: inline-block;
+	float: none;
+	margin: 1%;
+	min-height: 70px;
+	padding: 1%;
 	position: relative;
+	text-align: left;
+	width:44%;
 }
 
 .tile.col_0 { clear: both;}
@@ -171,21 +206,39 @@ div.nav>ul.cat>.selected>a {
 
 /* Category Colors
  * ----------------------------------------------------------- */
-.category_1, .category_1>a {	border-color: rgb(255, 112, 0)!important;}
-.category_2, .category_2>a {	border-color: rgb(163, 163, 163)!important;}
-.category_3, .category_3>a {	border-color: rgb(52, 124, 180)!important;}
-.category_4, .category_4>a {	border-color: rgb(224, 0, 255)!important;}
-.category_5, .category_5>a, 
-.category_6, .category_6>a {	border-color: rgb(255, 255, 255)!important;}
-.category_7, .category_7>a {	border-color: rgb(0, 0, 0)!important;}
-.category_8, .category_8>a {	border-color: rgb(177, 112, 62)!important;}
-.category_9, .category_9>a {	border-color: rgb(255, 214, 0)!important;}
-.category_10, .category_10>a {	border-color: rgb(22, 170, 45)!important;}
-.category_11, .category_11>a {	border-color: rgb(178, 255, 246)!important;}
-.category_12, .category_12>a {	border-color: rgb(151, 0, 172)!important;}
-.category_13, .category_13>a {	border-color: rgb(236, 102, 255)!important;}
-.category_14, .category_14>a {	border-color: rgb(245, 174, 255)!important;}
-.category_15, .category_15>a {	border-color: #d4daf0!important;}
+.cat_1, .cat_1>a {		border-color: rgb(255, 112, 0)!important; 	}
+.cat_2, .cat_2>a {		border-color: rgb(163, 163, 163)!important;	}
+.cat_3, .cat_3>a {		border-color: rgb(52, 124, 180)!important;	}
+.cat_4, .cat_4>a {		border-color: rgb(224, 0, 255)!important;	}
+.cat_5, .cat_5>a, 
+.cat_6, .cat_6>a {		border-color: rgb(255, 255, 255)!important; }
+.cat_7, .cat_7>a {		border-color: rgb(0, 0, 0)!important; 		}
+.cat_8, .cat_8>a {		border-color: rgb(177, 112, 62)!important; 	}
+.cat_9, .cat_9>a {		border-color: rgb(255, 214, 0)!important; 	}
+.cat_10, .cat_10>a {	border-color: rgb(22, 170, 45)!important; 	}
+.cat_11, .cat_11>a {	border-color: rgb(178, 255, 246)!important; }
+.cat_12, .cat_12>a {	border-color: rgb(255, 0, 133)!important; 	}
+.cat_13, .cat_13>a {	border-color: rgb(128, 56, 255)!important; 	}
+.cat_14, .cat_14>a {	border-color: rgb(255, 205, 231)!important; }
+.cat_15, .cat_15>a {	border-color: #d4daf0!important;}
+
+.nav .cat_1.selected>a, .nav .cat_1>a:hover {	background-color: rgb(255, 112, 0)!important;}
+.nav .cat_2.selected>a, .nav .cat_2>a:hover {	background-color: rgb(163, 163, 163)!important;}
+.nav .cat_3.selected>a, .nav .cat_3>a:hover {	background-color: rgb(52, 124, 180)!important;}
+.nav .cat_4.selected>a, .nav .cat_4>a:hover {	background-color: rgb(224, 0, 255)!important;}
+.nav .cat_5.selected>a, .nav .cat_5>a:hover,
+.nav .cat_6.selected>a, .nav .cat_6>a:hover {	background-color: rgb(255, 255, 255)!important; color:#666;}
+.nav .cat_7.selected>a, .nav .cat_7>a:hover {	background-color: rgb(0, 0, 0)!important;}
+.nav .cat_8.selected>a, .nav .cat_8>a:hover {	background-color: rgb(177, 112, 62)!important;}
+.nav .cat_9.selected>a, .nav .cat_9>a:hover {	background-color: rgb(255, 214, 0)!important;}
+.nav .cat_10.selected>a, .nav .cat_10>a:hover {	background-color: rgb(22, 170, 45)!important;}
+.nav .cat_11.selected>a, .nav .cat_11>a:hover {	background-color: rgb(178, 255, 246)!important; color:#666;}
+.nav .cat_12.selected>a, .nav .cat_12>a:hover {	background-color: rgb(255, 0, 133)!important;}
+.nav .cat_13.selected>a, .nav .cat_13>a:hover {	background-color: rgb(128, 56, 255)!important;}
+.nav .cat_14.selected>a, .nav .cat_14>a:hover {	background-color: rgb(255, 205, 231)!important; color:#666;}
+.nav .cat_15.selected>a, .nav .cat_15>a:hover {	background-color: #d4daf0!important;}
+
+/* Other Libvie 	border-color: #d4daf0!important;}
 
 /* Other Libview stuff
  * ----------------------------------------------------------- */
@@ -200,4 +253,32 @@ div.nav>ul.cat>.selected>a {
 	width:100%;
 }
 
+.overlay {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background-color: rgba(0,0,0,.7);
+}
+
+#website{
+	display: block;
+	height: 80%;
+	margin: 50px auto;
+	max-height: 800px;
+	max-width: 1140px;
+	width: 100%;
+}
+
 .clearfix {	clear: both; } /* quick & lazy method, fuck IE */
+
+
+@media screen and (max-width : 768px){
+	.tile{width:94%;}
+		#libview {width:50%;}
+		#left_panel, #right_panel{
+		width: 25%;
+	}
+
+}
