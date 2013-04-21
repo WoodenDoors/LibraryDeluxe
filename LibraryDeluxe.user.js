@@ -10,7 +10,7 @@
 
 
 /* --------------------------------------------------------
- * Helpful functions
+ * Prototyping the Strings
  * ------------------------------------------------------ */
 
 String.prototype.hashCode = function(){
@@ -44,35 +44,6 @@ String.prototype.distanceTo = function(a){
 };
 
 
-
-/* --------------------------------------------------------
- * Getting the TokyoTosho list of the current page
- * ------------------------------------------------------ */
-function getTTlist(from){	// prepared for ajax requests
-	var ttlist = [];
-	$('.listing tr',from).each(function(){
-		var top = $(this).find('.desc-top'),
-			bot = $(this).find('.desc-bot'),
-			web = $(this).find('.web'),
-			sts = $(this).find('.stats');
-		
-		if(top.length > 0){
-			top.find('.s').remove();
-			var ttItem = {
-				file 		: top.find('a:last').html(),
-				link 		: top.find('a:last').attr("href"),
-				web 		: web.html(),
-				category 	: $(this).attr('class').replace("shade","").replace(" ","").replace('category_','cat_')
-			};
-			ttlist.push(ttItem);
-		} 
-		else if(bot.length > 0){
-			ttlist[ttlist.length-1].meta = ttmetaParse(bot.html());
-			ttlist[ttlist.length-1].stats = sts.html();
-		}
-	});
-	return ttlist;
-}
 // 1 - anime *
 // 10 - non-english *
 // 3 - manga ^
@@ -98,6 +69,8 @@ if(~window.location.toString().indexOf("#noStyle")){
 	throw(new Error('#noStyle Called!'));
 }
 
+var catnum = window.location.toString().match(/(?:cat|type)=([0-9]{1,2})/);
+var searchterms = window.location.toString().match(/terms=(.*?)(?:\&|$)/);
 
 
 $('head').append('<link rel="stylesheet" href="http://www.thekohrs.net/mal/tt/libdeluxe.css" type="text/css" />');
@@ -118,7 +91,9 @@ $('body>p.footer').before(
 				<ul class='cat'></ul>\
 			</div>\
 		</section>\
-		<section id='libview'></section>\
+		<section id='libview'>\
+			<div class='spacer'></div>\
+		</section>\
 		<section id='right_panel'>\
 			<div class='nav'>\
 				<ul class='hot'></ul>\
@@ -149,8 +124,18 @@ $('div.nav>ul.cat').append(
 	 <li class="cat_5"><a href="/?cat=5">Other</a></li>'
 );
 
+if(catnum) {
+	$('.nav .cat_'+catnum[1]).addClass('selected');
+	$('#search').addClass('cat_'+catnum[1]);
+	$('#type').val(catnum[1]);
+}
+
+if(searchterms){
+	$('#search').val(decodeURIComponent(searchterms[1]).replace('+',' ').toLowerCase());
+}
 
 var libview = $('#libview');
+
 var collection = {};
 loadCollection();
 
@@ -172,9 +157,11 @@ else {
 }
 
 
-/*
- * Eventlisteners
- */
+/* --------------------------------------------------------
+ * Event Listeners
+ * ------------------------------------------------------ */
+
+// Scroll Event
 $(window).scroll(function () {
 	var i = 0;
 	$('#libview .waitForAnimation').each(function(){
@@ -191,6 +178,8 @@ $(window).scroll(function () {
 		}
 	});
 });
+
+// Search Button events
 var searchLength=0;
 $('#search').focus(function(){
 	$(this).attr('placeholder','');
@@ -203,29 +192,33 @@ $('#search').focus(function(){
 	if(searchLength===0 && e.which===8){
 		$('#type').val('');
 		$(this).attr('class','');
-	} else if(n= $(this).val().match(/ ?[@!#](\w*)$/i)){
-		switch(n[1].toUpperCase()){
-			case 'ALL': 		type = 'all';	break;
-			case 'ANIME':		type = 1; 	break;
-			case 'NON-ENGLISH':type = 10;	break;	
-			case 'RAWS':		type = 7;	break;	
-			case 'MANGA':		type = 3;	break;	
-			case 'DRAMA':		type = 8;	break;	
-			case 'MUSIC':		type = 2;	break;	
-			case 'MVIDEO':		type = 9;	break;	
-			case 'BATCH':		type = 11;	break;	
-			case 'HENTAI':		type = 4;	break;	
-			case 'H-ANIME':		type = 12;	break;	
-			case 'H-MANGA':		type = 13;	break;	
-			case 'H-GAME':		type = 14;	break;	
-			case 'JAV':			type = 15;	break;	
-			case 'OTHER':		type = 5;	break;
-		}
-		if(type){
-			$('#type').val(type);
-			$(this).val($(this).val().replace(n[0],''));
-			$(this).attr('class','');
-			$(this).addClass('cat_'+type);
+	} else {
+		n = $(this).val().match(/ ?[@!#:](\w*)$/i);
+		if(!n) n = $(this).val().match(/ ?(\w*)[@!#:]{1}/i);
+		if(n){
+			switch(n[1].toUpperCase()){
+				case 'ALL': 		type = 'all';	break;
+				case 'ANIME':		type = 1; 	break;
+				case 'NON-ENGLISH':type = 10;	break;	
+				case 'RAWS':		type = 7;	break;	
+				case 'MANGA':		type = 3;	break;	
+				case 'DRAMA':		type = 8;	break;	
+				case 'MUSIC':		type = 2;	break;	
+				case 'MVIDEO':		type = 9;	break;	
+				case 'BATCH':		type = 11;	break;	
+				case 'HENTAI':		type = 4;	break;	
+				case 'H-ANIME':		type = 12;	break;	
+				case 'H-MANGA':		type = 13;	break;	
+				case 'H-GAME':		type = 14;	break;	
+				case 'JAV':			type = 15;	break;	
+				case 'OTHER':		type = 5;	break;
+			}
+			if(type){
+				$('#type').val(type);
+				$(this).val($(this).val().replace(n[0],''));
+				$(this).attr('class','');
+				$(this).addClass('cat_'+type);
+			}
 		}
 	}
 	searchLength = $(this).val().length;
@@ -235,10 +228,24 @@ $('.searchfield>form').submit(function(e){
 	//return false;
 });
 
-/**
- * Functions
- */
+$(window).keydown(function(e){
+	if(document.activeElement != $('#search')[0])
+		$('#search')[0].focus()
+});
 
+$('#header h1').click(function(){window.location = 'index.php'});
+
+function openInIframe(e){
+	if(e.which==1){ 
+		e.preventDefault();
+		openIframe($(this).attr('href'));
+	}
+}
+
+
+/* --------------------------------------------------------
+ * Functions
+ * ------------------------------------------------------ */
 function isOnScreen(elem){
 	var docViewTop = $(window).scrollTop();
 	var docViewBottom = docViewTop + $(window).height();
@@ -280,7 +287,10 @@ function spawnTiles(list){
 
 	for (var j = 0; j < list.length; j++) {
 		var t = list[j];
+		console.time(t.file);
 		var a = new Anime(t.file);
+		console.log(a);
+		console.timeEnd(t.file);
 		if(a.title) {
 			var hashCode = a.title.hashCode();
 			
@@ -296,7 +306,7 @@ function spawnTiles(list){
 
 			var tile = $(
 			"<div class='tile "+t.category+"' data-name='"+hashCode+"'>\
-				<img class='thumb' width='50' />\
+				<a><img class='thumb' width='50' /></a>\
 				<h2 class='title'>\
 					<a href='"+t.link+"' title='"+a.filename+"'>"+a.title+"</a>\
 				</h2>\
@@ -320,24 +330,30 @@ function spawnTiles(list){
 			else if(t.meta.auth==2)
 				tile.find(".group").addClass("auth_bad");
 
+			//.website-icon
+			var links = $('<div>'+t.web+'</div>').find('a');
+			if(links.length==2){
+				tile.find('.group').append(' ').append($(links[0]).attr('title','Website').html('<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAABC1BMVEWT3SBbqwBdpxtrviQ9cJRzwg5yywF70A2I0Ix1t6E/cJgTIVwFD6s3Zg4OGWWE0Bd4vFgwU/9EcrST4hae6UCN1aN4u9+Ez/9Wi8p8wv+H2BWZ5Gw4X+8xUcwkQdQAAACQ2ZiL0enE8M+f5oam5F247e+v8v+U1m2T3/+X3+qY5ByD0v99xP96uXqV3lb0//+b4fKa6BqMy4J+vtl4vf9koP2Q3v91u1GH2Bah7w5htQB61ABUk2Vyuz9ZgfBsrf9fltpKefKj6FF9xP2b5DWMzY5pqP94tKl+v5+GymmQ2jZ7wN2T2U+e5jBYl2NkvACK4AYhPOUuXmOA3QBGa+15vll2wT82XuRbhPXT8Qp7AAAAIHRSTlPM2/uLXfgiLMbD83rprSbS0yzehYGAVlabCykHKZUCAER+cdwAAAB5SURBVHjaAW4Akf8AHx8bFwgAExofHwAfHxRLMCMqDwcfABkVTSEmKScxBQYAFkwuIi8oIC03AwAJREIkJTY0MjgCABBKRUMrLDM5OzoAGFVIRj81QD08AQAcElZJR0FXVD4EAB8RClNQTlFYHR4AHx8ODU9SDAsfHzzwEKL1+1SUAAAAAElFTkSuQmCC">'));
+			}
+
 			// add meta tags
-			tile.find(".meta").append("<span class='size'>"+t.meta.size+"</span>");
+			var metadiv = tile.find(".meta").append("<span class='size'>"+t.meta.size+"</span>");
 
 			if(a.extras_unsafe.length>0)
-				tile.find('.meta').append("<span class='extra_unsafe'>"+a.extras_unsafe.join("</span><span class='extra_unsafe'>")+"</span>");
+				metadiv.append("<span class='extra_unsafe'>"+a.extras_unsafe.join("</span><span class='extra_unsafe'>")+"</span>");
 
 			if(a.extras.length>0)
-				tile.find('.meta').append("<span class='extra'>"+a.extras.join("</span><span class='extra'>")+"</span>");
+				metadiv.append("<span class='extra'>"+a.extras.join("</span><span class='extra'>")+"</span>");
 			
 			if(a.resolution.length>0){
 				var res = a.resolution[0].replace(/^[0-9]{3,4}X([0-9]{3,4})/i,"$1P");		// trim those long definitions
-				tile.find('.meta').append("<span class='resolution'>"+res+"</span>");
+				metadiv.append("<span class='resolution'>"+res+"</span>");
 			}
 			if(a.videoType.length>0)
-				tile.find('.meta').append("<span class='video'>"+a.videoType.join("</span><span class='video'>")+"</span>");
+				metadiv.append("<span class='video'>"+a.videoType.join("</span><span class='video'>")+"</span>");
 			
 			if(a.audioType.length>0)
-				tile.find('.meta').append("<span class='audio'>"+a.audioType.join("</span><span class='audio'>")+"</span>");
+				metadiv.append("<span class='audio'>"+a.audioType.join("</span><span class='audio'>")+"</span>");
 			
 			if(a.version != undefined)
 				tile.find('.ribbon').append("<div class='version'>"+a.version+"</div>");
@@ -345,12 +361,7 @@ function spawnTiles(list){
 
 			// open Nyaa tracker in iframe
 			if(t.link.indexOf('nyaa.eu/')>-1){
-				$('.title>a',tile).bind('click',function(e){
-					if(e.which==1){ 
-						e.preventDefault();
-						openIframe($(this).attr('href'));
-					}
-				});
+				$('.title>a',tile).bind('click',openInIframe);
 			}
 
 			//clearfix
@@ -363,20 +374,11 @@ function spawnTiles(list){
 			// append to libview
 			$(libview).append(tile);
 
-
 			if(isOnScreen($('.tile:last',libview))){
-			TweenMax.from(tile,.5,{	delay:j*.2 + 1, 
-									opacity:0, 
-									//rotation:(posCount%2>0? -30: 30),
-									//x:(posCount%2>0? 50: -50),
-									y:200
-			});
+				TweenMax.from(tile,.5,{	delay:j*.2 + 1, opacity:0, y:200});
 			} else {
 				tile.addClass('waitForAnimation');
 			}
-
-
-
 
 			if(!collection[hashCode]){
 				collection[hashCode] = "loading!";
@@ -388,6 +390,7 @@ function spawnTiles(list){
 						collection[result.hashCode] = result.data;
 						saveCollection();
 						$(".tile[data-name="+result.hashCode+"] .thumb").attr('src',result.data.image_url);
+						$(".tile[data-name="+result.hashCode+"] .thumb").parent().attr('href','http://myanimelist.net/anime/'+result.data.id).bind('click',openInIframe);
 					}
 				});
 			} else if(collection[hashCode] === "loading!"){
@@ -395,10 +398,40 @@ function spawnTiles(list){
 			} else if(collection[hashCode] === "no result!"){
 				// well fuck... Maybe later on we'll try something new
 			} else {
-				$(".thumb",tile).attr('src', collection[hashCode].image_url);
+				$(".thumb",tile).attr('src', collection[hashCode].image_url)
+				.parent().attr('href','http://myanimelist.net/anime/'+collection[hashCode].id).bind('click',openInIframe);
 			}
 		}
 	};
+}
+
+/* --------------------------------------------------------
+ * Getting the TokyoTosho list of the current page
+ * ------------------------------------------------------ */
+function getTTlist(from){	// prepared for ajax requests
+	var ttlist = [];
+	$('.listing tr',from).each(function(){
+		var top = $(this).find('.desc-top'),
+			bot = $(this).find('.desc-bot'),
+			web = $(this).find('.web'),
+			sts = $(this).find('.stats');
+		
+		if(top.length > 0){
+			top.find('.s').remove();
+			var ttItem = {
+				file 		: top.find('a:last').html(),
+				link 		: top.find('a:last').attr("href"),
+				web 		: web.html(),
+				category 	: $(this).attr('class').replace("shade","").replace(" ","").replace('category_','cat_')
+			};
+			ttlist.push(ttItem);
+		} 
+		else if(bot.length > 0){
+			ttlist[ttlist.length-1].meta = ttmetaParse(bot.html());
+			ttlist[ttlist.length-1].stats = sts.html();
+		}
+	});
+	return ttlist;
 }
 
 function ttmetaParse(meta){
@@ -479,6 +512,9 @@ function openIframe(url){
 }
 
 function saveCollection(){
+	if(collection.length>200){
+
+	}
 	window.localStorage.setItem("collection", JSON.stringify(collection));
 }
 
