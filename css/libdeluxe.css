@@ -277,7 +277,23 @@ border-right: 4px solid;
 
 
 .clearfix {	clear: both; } /* quick & lazy method, fuck IE */
-.spacer{width:100%; height: 1px;}
+.spacer {width:100%; height: 1px;}
+.loading {
+	color: #ccc;
+	-webkit-animation: pulsate 1s ease-out;
+    -webkit-animation-iteration-count: infinite; 
+    opacity: 0.0
+}
+.error {
+	color: #C21212;
+}
+.msg {
+	font-size: 22px;
+	font-family: georgia;
+	padding-top: 36px;
+	display: block;
+	text-shadow: -1px 1px 1px #FFF;
+}
 
 
 @media screen and (max-width : 768px){
@@ -289,4 +305,10 @@ border-right: 4px solid;
 
 	.nav {margin:0 10px;}
 
+}
+
+@-webkit-keyframes pulsate {
+    0% {-webkit-transform: scale(0.1, 0.1); opacity: 0.0;}
+    50% {opacity: 1.0;}
+    100% {-webkit-transform: scale(1.2, 1.2); opacity: 0.0;}
 }

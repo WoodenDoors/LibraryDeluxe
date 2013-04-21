@@ -75,6 +75,8 @@ var searchterms = window.location.toString().match(/terms=(.*?)(?:\&|$)/);
 
 $('head').append('<link rel="stylesheet" href="http://www.thekohrs.net/mal/tt/libdeluxe.css" type="text/css" />');
 
+$('#main').append('<div id="loader"></div>');
+
 $('body>p.footer').before( 
 	"<div id='header'>\
 			<div class='searchfield'>\
@@ -128,6 +130,8 @@ if(catnum) {
 	$('.nav .cat_'+catnum[1]).addClass('selected');
 	$('#search').addClass('cat_'+catnum[1]);
 	$('#type').val(catnum[1]);
+} else {
+	$('.nav .cat_all').addClass('selected');
 }
 
 if(searchterms){
@@ -162,21 +166,24 @@ else {
  * ------------------------------------------------------ */
 
 // Scroll Event
-$(window).scroll(function () {
+$(window).scroll(scrollTiles);
+$(window).resize(scrollTiles);
+function scrollTiles() {
 	var i = 0;
 	$('#libview .waitForAnimation').each(function(){
 		if(isOnScreen(this)){
 			$(this).removeClass('waitForAnimation');
-			TweenMax.from($(this),.5,{ 
-								delay: i *.2,
-								opacity:0, 
-								//rotation:(posCount%2>0? -30: 30),
-								//x:(posCount%2>0? 50: -50),
-								y:200
-		});
-		i++;
+			TweenMax.from($(this),.5,{ delay: i *.2, opacity:0,	y:200});
+			i++;
 		}
 	});
+};
+
+$('.nav a').bind('click',function(e){
+	if(e.which==1){
+		e.preventDefault();
+		ajaxLoadTT($(this).attr('href'));
+	}
 });
 
 // Search Button events
@@ -218,6 +225,7 @@ $('#search').focus(function(){
 				$(this).val($(this).val().replace(n[0],''));
 				$(this).attr('class','');
 				$(this).addClass('cat_'+type);
+				$('.cat>li').removeClass('selected').parent().find('.cat_'+type).addClass('selected');
 			}
 		}
 	}
@@ -225,7 +233,8 @@ $('#search').focus(function(){
 });
 $('.searchfield>form').submit(function(e){
 	console.log('Submitting: '+$(this).serialize());
-	//return false;
+	ajaxLoadTT('/search.php?'+$(this).serialize());
+	return false;
 });
 
 $(window).keydown(function(e){
@@ -287,10 +296,7 @@ function spawnTiles(list){
 
 	for (var j = 0; j < list.length; j++) {
 		var t = list[j];
-		console.time(t.file);
 		var a = new Anime(t.file);
-		console.log(a);
-		console.timeEnd(t.file);
 		if(a.title) {
 			var hashCode = a.title.hashCode();
 			
@@ -321,6 +327,11 @@ function spawnTiles(list){
 			if(a.episode) 
 				tile.find(".title>a").append(' <span class="ep">'+a.episode+'</span>');
 
+			//.website-icon
+			var links = $('<div>'+t.web+'</div>').find('a');
+			if(links.length==2)
+				tile.find('.group').append($(links[0]).attr('title','Website').html('<img style="position:relative;top:2px;left:2px;" width="13" src="data:image/gif;base64,R0lGODlhEAAQALMAAAAAAP///19vj9Ha7B1ChKezxr/I13mOrpGjuTRLY/v8/bCztf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQABAAAARUkMlJq704az0K+obUfUjBdIOiGEfhpmtbDEgiuK5R2MgiIIqETqUaDAQGxCABFBaICiNSmZghDgiCVpvALhAC2sJ4+H1mgzKCwRLYTOwyb0Ov2+8RADs=">'));
+			
 			// insert Contributor
 			if(t.meta.submitter != "Anonymous")
 				tile.find(".group").append(" <small title='Submitter'>("+t.meta.submitter+")</small>");
@@ -329,12 +340,6 @@ function spawnTiles(list){
 				tile.find(".group").addClass("auth_ok");
 			else if(t.meta.auth==2)
 				tile.find(".group").addClass("auth_bad");
-
-			//.website-icon
-			var links = $('<div>'+t.web+'</div>').find('a');
-			if(links.length==2){
-				tile.find('.group').append(' ').append($(links[0]).attr('title','Website').html('<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAABC1BMVEWT3SBbqwBdpxtrviQ9cJRzwg5yywF70A2I0Ix1t6E/cJgTIVwFD6s3Zg4OGWWE0Bd4vFgwU/9EcrST4hae6UCN1aN4u9+Ez/9Wi8p8wv+H2BWZ5Gw4X+8xUcwkQdQAAACQ2ZiL0enE8M+f5oam5F247e+v8v+U1m2T3/+X3+qY5ByD0v99xP96uXqV3lb0//+b4fKa6BqMy4J+vtl4vf9koP2Q3v91u1GH2Bah7w5htQB61ABUk2Vyuz9ZgfBsrf9fltpKefKj6FF9xP2b5DWMzY5pqP94tKl+v5+GymmQ2jZ7wN2T2U+e5jBYl2NkvACK4AYhPOUuXmOA3QBGa+15vll2wT82XuRbhPXT8Qp7AAAAIHRSTlPM2/uLXfgiLMbD83rprSbS0yzehYGAVlabCykHKZUCAER+cdwAAAB5SURBVHjaAW4Akf8AHx8bFwgAExofHwAfHxRLMCMqDwcfABkVTSEmKScxBQYAFkwuIi8oIC03AwAJREIkJTY0MjgCABBKRUMrLDM5OzoAGFVIRj81QD08AQAcElZJR0FXVD4EAB8RClNQTlFYHR4AHx8ODU9SDAsfHzzwEKL1+1SUAAAAAElFTkSuQmCC">'));
-			}
 
 			// add meta tags
 			var metadiv = tile.find(".meta").append("<span class='size'>"+t.meta.size+"</span>");
@@ -437,6 +442,7 @@ function getTTlist(from){	// prepared for ajax requests
 function ttmetaParse(meta){
 	var a = meta.split(" | Comment: ");
 	var b = a[0].split(" | ");
+	var c,d,e;
 	//console.log(b);
 	var metadata = {
 		"auth":0,
@@ -461,9 +467,42 @@ function ttmetaParse(meta){
 
 		} else if(b[i].indexOf('ago') > -1) {
 			metadata.date = b[i];
+		} else {
+			c = b[i].split(' ');
+			d = c[2].split(':');
+			c = c[1].split('-');
+			e = Date.UTC(c[0],c[1]-1,c[2],d[0],d[1]);
+			var now = new Date();
+			d = now-e;
+			if(Math.floor(d/(24 * 60 * 60 * 1000)) > 1) {							//days
+				metadata.date = Math.floor(d/(24 * 60 * 60 * 1000)) + " days ago";
+			} else if(Math.floor(d/(24 * 60 * 60 * 1000)) > 0) {					//day
+				metadata.date = "1 day ago";
+			} else if(Math.floor(d/(60 * 60 * 1000)) > 1) {							//hours
+				metadata.date = Math.floor(d/(60 * 60 * 1000)) + " hours ago";
+			} else if(Math.floor(d/(60 * 60 * 1000)) > 0) {							//hour
+				metadata.date = "1 hour ago";
+			} else if(Math.floor(d/(60 * 1000)) > 0) {								// minutes
+				metadata.date = "some min ago";
+			} else {
+				metadata.date = "some sec ago";
+			}
 		}
 	};
 	return metadata;
+}
+
+function ajaxLoadTT(url){
+	$('#libview').empty().append('<span class="loading msg">Loading Content...</span>');
+	$('#loader').empty().load(url + " .listing",function(){
+		$('#libview .loading').remove();
+		var loaded_list = getTTlist($('#loader'));
+		if(loaded_list.length > 0){
+			spawnTiles(loaded_list);
+		} else {
+			$('#libview').append('<span class="error msg">Nothing found!</span>');
+		}
+	});
 }
 
 
