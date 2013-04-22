@@ -179,6 +179,19 @@ border-right: 4px solid;
 	overflow: hidden;
 }
 
+.tile .leftcol {
+float: left;
+width: 18px;
+margin-left: 2px;
+height: 59px;
+}
+
+.tile .leftcol a {
+display: block;
+height: 19px;
+text-align: center;
+}
+
 /* Meta data 
  * ----------------------------------------------------------- */
 .tile .meta > span {
@@ -210,36 +223,36 @@ border-right: 4px solid;
 
 /* Category Colors
  * ----------------------------------------------------------- */
-.cat_1, .cat_1>a {		border-color: rgb(255, 112, 0)!important; 	}
-.cat_2, .cat_2>a {		border-color: rgb(255, 246, 140)!important;	}
-.cat_3, .cat_3>a {		border-color: rgb(52, 124, 180)!important;	}
-.cat_4, .cat_4>a {		border-color: rgb(224, 0, 255)!important;	}
+.cat_1, .cat_1>a {		border-color: #FF7000!important;}
+.cat_2, .cat_2>a {		border-color: #FFF68C!important;}
+.cat_3, .cat_3>a {		border-color: #347CB4!important;}
+.cat_4, .cat_4>a {		border-color: #F400FF!important;}
 .cat_5, .cat_5>a, 
-.cat_6, .cat_6>a {		border-color: rgb(255, 255, 255)!important; }
-.cat_7, .cat_7>a {		border-color: rgb(0, 0, 0)!important; 		}
-.cat_8, .cat_8>a {		border-color: rgb(177, 112, 62)!important; 	}
-.cat_9, .cat_9>a {		border-color: rgb(255, 214, 0)!important; 	}
-.cat_10, .cat_10>a {	border-color: rgb(22, 170, 45)!important; 	}
-.cat_11, .cat_11>a {	border-color: rgb(178, 255, 246)!important; }
-.cat_12, .cat_12>a {	border-color: rgb(255, 0, 133)!important; 	}
-.cat_13, .cat_13>a {	border-color: rgb(128, 56, 255)!important; 	}
-.cat_14, .cat_14>a {	border-color: rgb(255, 205, 231)!important; }
+.cat_6, .cat_6>a {		border-color: #FFF!important;	}
+.cat_7, .cat_7>a {		border-color: #000!important; 	}
+.cat_8, .cat_8>a {		border-color: #B1703E!important;}
+.cat_9, .cat_9>a {		border-color: #FFD600!important;}
+.cat_10, .cat_10>a {	border-color: #16AA2D!important;}
+.cat_11, .cat_11>a {	border-color: #B2FFF6!important;}
+.cat_12, .cat_12>a {	border-color: #FF0085!important;}
+.cat_13, .cat_13>a {	border-color: #8038FF!important;}
+.cat_14, .cat_14>a {	border-color: #FFCDE7!important;}
 .cat_15, .cat_15>a {	border-color: #d4daf0!important;}
 
-.nav .cat_1.selected>a, .nav .cat_1>a:hover {	background-color: rgb(255, 112, 0)!important;}
-.nav .cat_2.selected>a, .nav .cat_2>a:hover {	background-color: rgb(255, 246, 140)!important; color:#666;}
-.nav .cat_3.selected>a, .nav .cat_3>a:hover {	background-color: rgb(52, 124, 180)!important;}
-.nav .cat_4.selected>a, .nav .cat_4>a:hover {	background-color: rgb(224, 0, 255)!important;}
+.nav .cat_1.selected>a, .nav .cat_1>a:hover {	background-color: #FF7000!important;}
+.nav .cat_2.selected>a, .nav .cat_2>a:hover {	background-color: #FFF68C!important; 	color:#666;}
+.nav .cat_3.selected>a, .nav .cat_3>a:hover {	background-color: #347CB4!important;}
+.nav .cat_4.selected>a, .nav .cat_4>a:hover {	background-color: #F400FF!important;}
 .nav .cat_5.selected>a, .nav .cat_5>a:hover,
-.nav .cat_6.selected>a, .nav .cat_6>a:hover {	background-color: rgb(255, 255, 255)!important; color:#666;}
-.nav .cat_7.selected>a, .nav .cat_7>a:hover {	background-color: rgb(0, 0, 0)!important;}
-.nav .cat_8.selected>a, .nav .cat_8>a:hover {	background-color: rgb(177, 112, 62)!important;}
-.nav .cat_9.selected>a, .nav .cat_9>a:hover {	background-color: rgb(255, 214, 0)!important;}
-.nav .cat_10.selected>a, .nav .cat_10>a:hover {	background-color: rgb(22, 170, 45)!important;}
-.nav .cat_11.selected>a, .nav .cat_11>a:hover {	background-color: rgb(178, 255, 246)!important; color:#666;}
-.nav .cat_12.selected>a, .nav .cat_12>a:hover {	background-color: rgb(255, 0, 133)!important;}
-.nav .cat_13.selected>a, .nav .cat_13>a:hover {	background-color: rgb(128, 56, 255)!important;}
-.nav .cat_14.selected>a, .nav .cat_14>a:hover {	background-color: rgb(255, 205, 231)!important; color:#666;}
+.nav .cat_6.selected>a, .nav .cat_6>a:hover {	background-color: #FFF!important; 		color:#666;}
+.nav .cat_7.selected>a, .nav .cat_7>a:hover {	background-color: #000!important;}
+.nav .cat_8.selected>a, .nav .cat_8>a:hover {	background-color: #B1703E!important;}
+.nav .cat_9.selected>a, .nav .cat_9>a:hover {	background-color: #FFD600!important;}
+.nav .cat_10.selected>a, .nav .cat_10>a:hover {	background-color: #16AA2D!important;}
+.nav .cat_11.selected>a, .nav .cat_11>a:hover {	background-color: #B2FFF6!important; 	color:#666;}
+.nav .cat_12.selected>a, .nav .cat_12>a:hover {	background-color: #FF0085!important;}
+.nav .cat_13.selected>a, .nav .cat_13>a:hover {	background-color: #8038FF!important;}
+.nav .cat_14.selected>a, .nav .cat_14>a:hover {	background-color: #FFCDE7!important; 	color:#666;}
 .nav .cat_15.selected>a, .nav .cat_15>a:hover {	background-color: #d4daf0!important;}
 
 /* Other Libvie 	border-color: #d4daf0!important;}
@@ -277,6 +290,8 @@ border-right: 4px solid;
 
 
 .clearfix {	clear: both; } /* quick & lazy method, fuck IE */
+.sprite_web, .sprite_details {width: 12px; height: 12px;}
+
 .spacer {width:100%; height: 1px;}
 .loading {
 	color: #ccc;

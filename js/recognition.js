@@ -123,7 +123,7 @@ function parseFile(anime){
 
 	for (var e = 0; e < keywords.EPISODE.length - 1;e++) {				// trim episode prefixes
 		w = anime.file.toUpperCase().indexOf(keywords.EPISODE[e]);
-		if(~w && anime.file[w-1].match(/[_ .]/)){
+		if(~w && anime.file[w-1] && anime.file[w-1].match(/[_ .]/)){
 			anime.file = anime.file.substr(0,w) + anime.file.slice(w+keywords.EPISODE[e].length);
 			if(~keywords.EPISODE[e].indexOf('VOL'))						// special rule for vol
 				anime.episode = 'Vol. ';

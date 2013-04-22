@@ -59,24 +59,23 @@ String.prototype.distanceTo = function(a){
 // 15 - jav
 // 5 - other
 
+
 /* --------------------------------------------------------
  * DOM Manipulations from here on
  * ------------------------------------------------------ */
-// some adress bar magic for myself
-if(~window.location.toString().indexOf("#noStyle")){
-	//console.log(a);
-	//console.log(ttlist);
-	throw(new Error('#noStyle Called!'));
-}
+var page_cat = window.location.toString().match(/(?:cat|type)=([0-9]{1,2})/);
+var page_search = window.location.toString().match(/terms=(.*?)(?:\&|$)/);
+var hash = location.hash;
+var isLoading = false;
+console.log(window.location);
 
-var catnum = window.location.toString().match(/(?:cat|type)=([0-9]{1,2})/);
-var searchterms = window.location.toString().match(/terms=(.*?)(?:\&|$)/);
-
-
+// add CSS from external source for easier editing in the browser
 $('head').append('<link rel="stylesheet" href="http://www.thekohrs.net/mal/tt/libdeluxe.css" type="text/css" />');
 
+// Loader for ajax calls
 $('#main').append('<div id="loader"></div>');
 
+// Skeleton of the new interface
 $('body>p.footer').before( 
 	"<div id='header'>\
 			<div class='searchfield'>\
@@ -108,6 +107,7 @@ $('body>p.footer').before(
 	</div>"
 );
 
+// Categories, easier to resort
 $('div.nav>ul.cat').append(
 	'<li class="cat_all"><a href="/?">All</a></li>\
 	 <li class="cat_1"><a href="/?cat=1">Anime</a></li>\
@@ -126,33 +126,43 @@ $('div.nav>ul.cat').append(
 	 <li class="cat_5"><a href="/?cat=5">Other</a></li>'
 );
 
-if(catnum) {
-	$('.nav .cat_'+catnum[1]).addClass('selected');
-	$('#search').addClass('cat_'+catnum[1]);
-	$('#type').val(catnum[1]);
+// add page information to the new interface
+if(page_cat) {
+	$('.nav .cat_'+page_cat[1]).addClass('selected');
+	$('#search').addClass('cat_'+page_cat[1]);
+	$('#type').val(page_cat[1]);
 } else {
 	$('.nav .cat_all').addClass('selected');
 }
 
-if(searchterms){
-	$('#search').val(decodeURIComponent(searchterms[1]).replace('+',' ').toLowerCase());
+if(page_search){
+	$('#search').val(decodeURIComponent(page_search[1]).replace('+',' ').toLowerCase());
 }
 
-var libview = $('#libview');
+var libview = $('#libview'),
+	MALdata = {};
 
-var collection = {};
-loadCollection();
+// loading cached anime-data from localstorage
+loadMALdata();
 
+// loading settings from localstorage
+// skip opening if nessesary
 if(window.localStorage.getItem("skip_opening")){
 	initInterface(false);
 	$(document).ready(function() {
-		spawnTiles(getTTlist(document.body));
+		console.log([hash, hash == true]);
+		if(hash){
+			ajaxLoadTT(hash.replace('#',''));
+		} else {
+			spawnTiles(getTTlist(document.body));
+		}
 	});
+		
 }
 else {
-
 	$(document).ready(function(){
 		var ttlist = getTTlist(document.body);
+		// fancy openings sequence
 		var openingSequence = new TimelineLite({onComplete:initInterface, onCompleteParams:[ttlist]});
 		openingSequence.append(TweenMax.to($('#main'),1,{width:1140}));
 		openingSequence.append(TweenMax.to($('#main'),1,{opacity:0}));
@@ -164,7 +174,6 @@ else {
 /* --------------------------------------------------------
  * Event Listeners
  * ------------------------------------------------------ */
-
 // Scroll Event
 $(window).scroll(scrollTiles);
 $(window).resize(scrollTiles);
@@ -182,6 +191,8 @@ function scrollTiles() {
 $('.nav a').bind('click',function(e){
 	if(e.which==1){
 		e.preventDefault();
+		$('.cat>li').removeClass('selected');
+		$(this).parent().addClass('selected');
 		ajaxLoadTT($(this).attr('href'));
 	}
 });
@@ -200,8 +211,8 @@ $('#search').focus(function(){
 		$('#type').val('');
 		$(this).attr('class','');
 	} else {
-		n = $(this).val().match(/ ?[@!#:](\w*)$/i);
-		if(!n) n = $(this).val().match(/ ?(\w*)[@!#:]{1}/i);
+		n = $(this).val().match(/ ?[@!#:]([a-z\-]*)$/i);
+		if(!n) n = $(this).val().match(/ ?([a-z\-]*)[@!#:]{1}/i);
 		if(n){
 			switch(n[1].toUpperCase()){
 				case 'ALL': 		type = 'all';	break;
@@ -238,9 +249,38 @@ $('.searchfield>form').submit(function(e){
 });
 
 $(window).keydown(function(e){
+	//TODO: Catch some keys they shouldn't focus like ctrl, shift, space, etc.
 	if(document.activeElement != $('#search')[0])
-		$('#search')[0].focus()
+		$('#search')[0].focus();
 });
+
+
+// page change event
+setInterval(function()
+{
+    if (location.hash != hash)
+    {
+        console.log("Changed from " + hash + " to " + location.hash);
+        hash = location.hash;
+        // set interface to current hash
+        var load_cat = hash.match(/(?:cat|type)=([0-9]{1,2})/);
+		var load_search = window.location.toString().match(/terms=(.*?)(?:\&|$)/);
+		if(load_cat) {
+			$('.cat>li').removeClass('selected');
+			$('.cat .cat_'+load_cat[1]).addClass('selected');
+			$('#search').attr('class','').addClass('cat_'+load_cat[1]);
+			$('#type').val(load_cat[1]);
+		} else {
+			$('.cat>li').removeClass('selected');
+			$('.nav .cat_all').addClass('selected');
+		}
+		if(load_search)
+			$('#search').val(load_search[1]);
+		// see if this is init by loader
+        if(!isLoading)
+        	ajaxLoadTT(hash.replace('#',''));
+    }
+}, 100);
 
 $('#header h1').click(function(){window.location = 'index.php'});
 
@@ -322,8 +362,19 @@ function spawnTiles(list){
 				<div class='meta'></div>\
 			</div>");
 
+			/* //TODO: make this extra column work
+			$('.tile').prepend('
+				<div class="leftcol">\
+					<a class="magnet"><span class="sprite_magnet"></span></a>\
+					<a class="website"><span class="sprite_web"></span></a>\
+					<a class="details"><span class="sprite_details"></span></a>\
+				</div>'
+				);
+			*/
 
-			// insert optional stuff if they are available
+			/**
+			 * Conditional Stuff
+			 */
 			if(a.episode) 
 				tile.find(".title>a").append(' <span class="ep">'+a.episode+'</span>');
 
@@ -351,8 +402,8 @@ function spawnTiles(list){
 				metadiv.append("<span class='extra'>"+a.extras.join("</span><span class='extra'>")+"</span>");
 			
 			if(a.resolution.length>0){
-				var res = a.resolution[0].replace(/^[0-9]{3,4}X([0-9]{3,4})/i,"$1P");		// trim those long definitions
-				metadiv.append("<span class='resolution'>"+res+"</span>");
+				//var res = a.resolution[0].replace(/^[0-9]{3,4}X([0-9]{3,4})/i,"$1P");		// trim those long definitions
+				metadiv.append("<span class='resolution'>"+a.resolution[0]+"</span>");
 			}
 			if(a.videoType.length>0)
 				metadiv.append("<span class='video'>"+a.videoType.join("</span><span class='video'>")+"</span>");
@@ -362,7 +413,6 @@ function spawnTiles(list){
 			
 			if(a.version != undefined)
 				tile.find('.ribbon').append("<div class='version'>"+a.version+"</div>");
-
 
 			// open Nyaa tracker in iframe
 			if(t.link.indexOf('nyaa.eu/')>-1){
@@ -385,26 +435,32 @@ function spawnTiles(list){
 				tile.addClass('waitForAnimation');
 			}
 
-			if(!collection[hashCode]){
-				collection[hashCode] = "loading!";
+			if(!MALdata[hashCode]){
+				MALdata[hashCode] = "loading!";
 				searchMalData(a,function(result){
 					if(result == "no result!") {
 						// well fuck...
 						return;
 					} else {
-						collection[result.hashCode] = result.data;
-						saveCollection();
-						$(".tile[data-name="+result.hashCode+"] .thumb").attr('src',result.data.image_url);
-						$(".tile[data-name="+result.hashCode+"] .thumb").parent().attr('href','http://myanimelist.net/anime/'+result.data.id).bind('click',openInIframe);
+						MALdata[result.hashCode] = result.data;
+						saveMALdata();
+						$(".tile[data-name="+result.hashCode+"] .thumb")
+							.attr('src',result.data.image_url)
+							.parent() // <a> container
+							.attr('href','http://myanimelist.net/anime/'+result.data.id)
+							.bind('click',openInIframe);
 					}
 				});
-			} else if(collection[hashCode] === "loading!"){
+			} else if(MALdata[hashCode] === "loading!"){
 				//console.log('waiting for loading...');
-			} else if(collection[hashCode] === "no result!"){
+			} else if(MALdata[hashCode] === "no result!"){
 				// well fuck... Maybe later on we'll try something new
 			} else {
-				$(".thumb",tile).attr('src', collection[hashCode].image_url)
-				.parent().attr('href','http://myanimelist.net/anime/'+collection[hashCode].id).bind('click',openInIframe);
+				$(".thumb",tile)
+					.attr('src', MALdata[hashCode].image_url)
+					.parent()
+					.attr('href','http://myanimelist.net/anime/'+MALdata[hashCode].id)
+					.bind('click',openInIframe);
 			}
 		}
 	};
@@ -413,7 +469,7 @@ function spawnTiles(list){
 /* --------------------------------------------------------
  * Getting the TokyoTosho list of the current page
  * ------------------------------------------------------ */
-function getTTlist(from){	// prepared for ajax requests
+function getTTlist(from){	// 'from': prepared for ajax requests
 	var ttlist = [];
 	$('.listing tr',from).each(function(){
 		var top = $(this).find('.desc-top'),
@@ -493,8 +549,12 @@ function ttmetaParse(meta){
 }
 
 function ajaxLoadTT(url){
+	console.log(url);
 	$('#libview').empty().append('<span class="loading msg">Loading Content...</span>');
+	isLoading = true;
+	window.location = '#'+url;
 	$('#loader').empty().load(url + " .listing",function(){
+		isLoading = false;
 		$('#libview .loading').remove();
 		var loaded_list = getTTlist($('#loader'));
 		if(loaded_list.length > 0){
@@ -512,9 +572,8 @@ function ajaxLoadTT(url){
 
 function searchMalData(anime,cb){
 	var result={};
-	result.hashCode = anime.title.hashCode();
+	result.hashCode = anime.cleanTitle.hashCode();
 	result.anime = anime;
-	//collection[hashCode] = "loading!";
 	// filter illegal search terms
 	var query = anime.cleanTitle;
 	$.getJSON('http://mal-api.com/anime/search?q='+query, function(data) {
@@ -550,15 +609,15 @@ function openIframe(url){
 	$('.overlay').click(function(){$(this).hide();});
 }
 
-function saveCollection(){
-	if(collection.length>200){
+function saveMALdata(){
+	if(MALdata.length>200){
 
 	}
-	window.localStorage.setItem("collection", JSON.stringify(collection));
+	window.localStorage.setItem("MALdata", JSON.stringify(MALdata));
 }
 
-function loadCollection(){
-	var coll = window.localStorage.getItem("collection");
-	if(coll) collection = JSON.parse(coll);
+function loadMALdata(){
+	var coll = window.localStorage.getItem("MALdata");
+	if(coll) MALdata = JSON.parse(coll);
 	return (coll?true:false);
 }
