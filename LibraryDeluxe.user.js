@@ -44,30 +44,21 @@ String.prototype.distanceTo = function(a){
 };
 
 
-// 1 - anime *
-// 10 - non-english *
-// 3 - manga ^
-// 11 - batch *
-// 8 - drama
-// 2 - music
-// 9 - music video
-// 7 - raws *
-// 4 - hentai *
-// 12 - hentai (anime) *
-// 13 - hentai (manga) ^
-// 14 - hentai (game)
-// 15 - jav
-// 5 - other
-
 
 /* --------------------------------------------------------
  * DOM Manipulations from here on
  * ------------------------------------------------------ */
-var page_cat = window.location.toString().match(/(?:cat|type)=([0-9]{1,2})/);
-var page_search = window.location.toString().match(/terms=(.*?)(?:\&|$)/);
+//var page_cat = window.location.toString().match(/(?:cat|type)=([0-9]{1,2})/);
+//var page_search = window.location.toString().match(/terms=(.*?)(?:\&|$)/);
+var catlist= ['all','anime','music','manga','hentai','other','other','raws','drama','musicvideo','non-english','batch','h-anime','h-manga','h-game','jav'];
 var hash = location.hash;
 var isLoading = false;
 console.log(window.location);
+if(hash=='' && window.location.search.length>0){
+	window.location.hash = url2hash(window.location.search).hash;
+} else {
+	//TODO: set at least the page num correctly
+}
 
 // add CSS from external source for easier editing in the browser
 $('head').append('<link rel="stylesheet" href="http://www.thekohrs.net/mal/tt/libdeluxe.css" type="text/css" />');
@@ -127,7 +118,7 @@ $('div.nav>ul.cat').append(
 );
 
 // add page information to the new interface
-if(page_cat) {
+/*if(page_cat) {
 	$('.nav .cat_'+page_cat[1]).addClass('selected');
 	$('#search').addClass('cat_'+page_cat[1]);
 	$('#type').val(page_cat[1]);
@@ -137,7 +128,7 @@ if(page_cat) {
 
 if(page_search){
 	$('#search').val(decodeURIComponent(page_search[1]).replace('+',' ').toLowerCase());
-}
+}*/
 
 var libview = $('#libview'),
 	MALdata = {};
@@ -150,9 +141,9 @@ loadMALdata();
 if(window.localStorage.getItem("skip_opening")){
 	initInterface(false);
 	$(document).ready(function() {
-		console.log([hash, hash == true]);
-		if(hash){
-			ajaxLoadTT(hash.replace('#',''));
+		console.log([hash, hash.length>0]);
+		if(hash.length>0){
+			ajaxLoadTT(hash);
 		} else {
 			spawnTiles(getTTlist(document.body));
 		}
@@ -169,6 +160,10 @@ else {
 		openingSequence.append(TweenMax.to($('body'),1,{'background-color':'#eee'}),-1);
 	});
 }
+
+
+
+
 
 
 /* --------------------------------------------------------
@@ -214,23 +209,7 @@ $('#search').focus(function(){
 		n = $(this).val().match(/ ?[@!#:]([a-z\-]*)$/i);
 		if(!n) n = $(this).val().match(/ ?([a-z\-]*)[@!#:]{1}/i);
 		if(n){
-			switch(n[1].toUpperCase()){
-				case 'ALL': 		type = 'all';	break;
-				case 'ANIME':		type = 1; 	break;
-				case 'NON-ENGLISH':type = 10;	break;	
-				case 'RAWS':		type = 7;	break;	
-				case 'MANGA':		type = 3;	break;	
-				case 'DRAMA':		type = 8;	break;	
-				case 'MUSIC':		type = 2;	break;	
-				case 'MVIDEO':		type = 9;	break;	
-				case 'BATCH':		type = 11;	break;	
-				case 'HENTAI':		type = 4;	break;	
-				case 'H-ANIME':		type = 12;	break;	
-				case 'H-MANGA':		type = 13;	break;	
-				case 'H-GAME':		type = 14;	break;	
-				case 'JAV':			type = 15;	break;	
-				case 'OTHER':		type = 5;	break;
-			}
+			type = catlist.indexOf(n[1].toLowerCase());
 			if(type){
 				$('#type').val(type);
 				$(this).val($(this).val().replace(n[0],''));
@@ -248,39 +227,20 @@ $('.searchfield>form').submit(function(e){
 	return false;
 });
 
+var unsafe_keys = ['16', '9', '18', '32', '17', '37', '40', '39', '38'];
 $(window).keydown(function(e){
 	//TODO: Catch some keys they shouldn't focus like ctrl, shift, space, etc.
-	if(document.activeElement != $('#search')[0])
+	console.log(e.which);
+
+	if(unsafe_keys.indexOf(e.which.toString())==-1 && (document.activeElement != $('#search')[0])) {
 		$('#search')[0].focus();
+	}
 });
 
 
 // page change event
-setInterval(function()
-{
-    if (location.hash != hash)
-    {
-        console.log("Changed from " + hash + " to " + location.hash);
-        hash = location.hash;
-        // set interface to current hash
-        var load_cat = hash.match(/(?:cat|type)=([0-9]{1,2})/);
-		var load_search = window.location.toString().match(/terms=(.*?)(?:\&|$)/);
-		if(load_cat) {
-			$('.cat>li').removeClass('selected');
-			$('.cat .cat_'+load_cat[1]).addClass('selected');
-			$('#search').attr('class','').addClass('cat_'+load_cat[1]);
-			$('#type').val(load_cat[1]);
-		} else {
-			$('.cat>li').removeClass('selected');
-			$('.nav .cat_all').addClass('selected');
-		}
-		if(load_search)
-			$('#search').val(load_search[1]);
-		// see if this is init by loader
-        if(!isLoading)
-        	ajaxLoadTT(hash.replace('#',''));
-    }
-}, 100);
+setInterval(hashCheck,100);
+
 
 $('#header h1').click(function(){window.location = 'index.php'});
 
@@ -290,6 +250,10 @@ function openInIframe(e){
 		openIframe($(this).attr('href'));
 	}
 }
+
+
+
+
 
 
 /* --------------------------------------------------------
@@ -328,6 +292,80 @@ function skipOpening(bool){
 	window.localStorage.setItem("skip_opening", bool);
 }
 
+function createTile(a,t){
+	var tile = $(
+	"<div class='tile "+t.category+"'>\
+		<a><img class='thumb' width='50' /></a>\
+		<h2 class='title'>\
+			<a href='"+t.link+"' title='"+a.filename+"'>"+a.title+"</a>\
+		</h2>\
+		<h3 class='group'>"+(a.group ? a.group : "[uknown group]")+"</h3>\
+		<div class='comment'>"+t.meta.comment+"</div>\
+		<div class='ribbon'></div>\
+		<div class='meta'></div>\
+	</div>");
+
+	/* //TODO: make this leftcol column work
+	$('.tile').prepend('
+		<div class="leftcol">\
+			<a class="magnet"><span class="sprite_magnet"></span></a>\
+			<a class="website"><span class="sprite_web"></span></a>\
+			<a class="details"><span class="sprite_details"></span></a>\
+		</div>'
+		);
+	*/
+
+	/**
+	 * Conditional Stuff
+	 */
+	if(a.episode) 
+		tile.find(".title>a").append(' <span class="ep">'+a.episode+'</span>');
+
+	//.website-icon
+	var links = $('<div>'+t.web+'</div>').find('a');
+	if(links.length==2)
+		tile.find('.group').append($(links[0]).attr('title','Website').html('<img style="position:relative;top:2px;left:2px;" width="13" src="data:image/gif;base64,R0lGODlhEAAQALMAAAAAAP///19vj9Ha7B1ChKezxr/I13mOrpGjuTRLY/v8/bCztf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQABAAAARUkMlJq704az0K+obUfUjBdIOiGEfhpmtbDEgiuK5R2MgiIIqETqUaDAQGxCABFBaICiNSmZghDgiCVpvALhAC2sJ4+H1mgzKCwRLYTOwyb0Ov2+8RADs=">'));
+	
+	// insert Contributor
+	if(t.meta.submitter != "Anonymous")
+		tile.find(".group").append(" <small title='Submitter'>("+t.meta.submitter+")</small>");
+	
+	if(t.meta.auth>0)
+		tile.find(".group").addClass((t.meta.auth==1?"auth_ok":"auth_bad"));
+
+	// add meta tags
+	var metadiv = tile.find(".meta").append("<span class='size'>"+t.meta.size+"</span>");
+
+	if(a.extras_unsafe.length>0)
+		metadiv.append("<span class='extra_unsafe'>"+a.extras_unsafe.join("</span><span class='extra_unsafe'>")+"</span>");
+
+	if(a.extras.length>0)
+		metadiv.append("<span class='extra'>"+a.extras.join("</span><span class='extra'>")+"</span>");
+	
+	if(a.resolution.length>0){
+		//var res = a.resolution[0].replace(/^[0-9]{3,4}X([0-9]{3,4})/i,"$1P");		// trim those long definitions
+		metadiv.append("<span class='resolution'>"+a.resolution[0]+"</span>");
+	}
+	if(a.videoType.length>0)
+		metadiv.append("<span class='video'>"+a.videoType.join("</span><span class='video'>")+"</span>");
+	
+	if(a.audioType.length>0)
+		metadiv.append("<span class='audio'>"+a.audioType.join("</span><span class='audio'>")+"</span>");
+	
+	if(a.version != undefined)
+		tile.find('.ribbon').append("<div class='version'>"+a.version+"</div>");
+
+	// open Nyaa tracker in iframe
+	if(t.link.indexOf('nyaa.eu/')>-1){
+		$('.title>a',tile).bind('click',openInIframe);
+	}
+
+	//clearfix
+	$(tile).append("<div class='clearfix'></div>");
+
+	return tile;
+}
+
 function spawnTiles(list){
 
 	var time_ago="";
@@ -350,80 +388,9 @@ function spawnTiles(list){
 				posCount = 0;
 			}
 
-			var tile = $(
-			"<div class='tile "+t.category+"' data-name='"+hashCode+"'>\
-				<a><img class='thumb' width='50' /></a>\
-				<h2 class='title'>\
-					<a href='"+t.link+"' title='"+a.filename+"'>"+a.title+"</a>\
-				</h2>\
-				<h3 class='group'>"+(a.group ? a.group : "[uknown group]")+"</h3>\
-				<div class='comment'>"+t.meta.comment+"</div>\
-				<div class='ribbon'></div>\
-				<div class='meta'></div>\
-			</div>");
+			var tile = createTile(a,t);
 
-			/* //TODO: make this extra column work
-			$('.tile').prepend('
-				<div class="leftcol">\
-					<a class="magnet"><span class="sprite_magnet"></span></a>\
-					<a class="website"><span class="sprite_web"></span></a>\
-					<a class="details"><span class="sprite_details"></span></a>\
-				</div>'
-				);
-			*/
-
-			/**
-			 * Conditional Stuff
-			 */
-			if(a.episode) 
-				tile.find(".title>a").append(' <span class="ep">'+a.episode+'</span>');
-
-			//.website-icon
-			var links = $('<div>'+t.web+'</div>').find('a');
-			if(links.length==2)
-				tile.find('.group').append($(links[0]).attr('title','Website').html('<img style="position:relative;top:2px;left:2px;" width="13" src="data:image/gif;base64,R0lGODlhEAAQALMAAAAAAP///19vj9Ha7B1ChKezxr/I13mOrpGjuTRLY/v8/bCztf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQABAAAARUkMlJq704az0K+obUfUjBdIOiGEfhpmtbDEgiuK5R2MgiIIqETqUaDAQGxCABFBaICiNSmZghDgiCVpvALhAC2sJ4+H1mgzKCwRLYTOwyb0Ov2+8RADs=">'));
-			
-			// insert Contributor
-			if(t.meta.submitter != "Anonymous")
-				tile.find(".group").append(" <small title='Submitter'>("+t.meta.submitter+")</small>");
-			
-			if(t.meta.auth==1)
-				tile.find(".group").addClass("auth_ok");
-			else if(t.meta.auth==2)
-				tile.find(".group").addClass("auth_bad");
-
-			// add meta tags
-			var metadiv = tile.find(".meta").append("<span class='size'>"+t.meta.size+"</span>");
-
-			if(a.extras_unsafe.length>0)
-				metadiv.append("<span class='extra_unsafe'>"+a.extras_unsafe.join("</span><span class='extra_unsafe'>")+"</span>");
-
-			if(a.extras.length>0)
-				metadiv.append("<span class='extra'>"+a.extras.join("</span><span class='extra'>")+"</span>");
-			
-			if(a.resolution.length>0){
-				//var res = a.resolution[0].replace(/^[0-9]{3,4}X([0-9]{3,4})/i,"$1P");		// trim those long definitions
-				metadiv.append("<span class='resolution'>"+a.resolution[0]+"</span>");
-			}
-			if(a.videoType.length>0)
-				metadiv.append("<span class='video'>"+a.videoType.join("</span><span class='video'>")+"</span>");
-			
-			if(a.audioType.length>0)
-				metadiv.append("<span class='audio'>"+a.audioType.join("</span><span class='audio'>")+"</span>");
-			
-			if(a.version != undefined)
-				tile.find('.ribbon').append("<div class='version'>"+a.version+"</div>");
-
-			// open Nyaa tracker in iframe
-			if(t.link.indexOf('nyaa.eu/')>-1){
-				$('.title>a',tile).bind('click',openInIframe);
-			}
-
-			//clearfix
-			$(tile).append("<div class='clearfix'></div>");
-				//.append('<div class="file">'+a.filename+'</div>');
-
-			tile.addClass('col_'+posCount%2);
+			tile.attr('data-name',hashCode).addClass('col_'+posCount%2);
 			posCount++;
 
 			// append to libview
@@ -454,7 +421,7 @@ function spawnTiles(list){
 			} else if(MALdata[hashCode] === "loading!"){
 				//console.log('waiting for loading...');
 			} else if(MALdata[hashCode] === "no result!"){
-				// well fuck... Maybe later on we'll try something new
+				//TODO: try another time
 			} else {
 				$(".thumb",tile)
 					.attr('src', MALdata[hashCode].image_url)
@@ -549,11 +516,20 @@ function ttmetaParse(meta){
 }
 
 function ajaxLoadTT(url){
-	console.log(url);
 	$('#libview').empty().append('<span class="loading msg">Loading Content...</span>');
+	console.log('trying to load: '+url);
 	isLoading = true;
-	window.location = '#'+url;
-	$('#loader').empty().load(url + " .listing",function(){
+	var loadVars;
+    if(url.indexOf('#')>=0){
+       	loadVars = hash2url(url);
+    } else {
+        loadVars = url2hash(url);
+    }
+    console.log(loadVars);
+    setInterface(loadVars);
+
+	window.location = window.location.origin + loadVars.hash;
+	$('#loader').empty().load(loadVars.url + " .listing",function(){
 		isLoading = false;
 		$('#libview .loading').remove();
 		var loaded_list = getTTlist($('#loader'));
@@ -563,6 +539,70 @@ function ajaxLoadTT(url){
 			$('#libview').append('<span class="error msg">Nothing found!</span>');
 		}
 	});
+}
+
+function hashCheck()
+{
+    if (location.hash != hash)
+    {
+        console.log("Changed from " + hash + " to " + location.hash);
+        // #/$type|$cat/$page/$terms
+
+        hash = location.hash;
+
+        var loadVars;
+        if(hash.indexOf('#')>=0){
+        	loadVars = hash2url(hash);
+        } else {
+        	loadVars = url2hash(window.location.search);
+        }
+        console.log(loadVars);
+
+		setInterface(loadVars);
+		// see if this is init by loader
+        if(!isLoading)
+        	ajaxLoadTT(loadVars.url);
+    }
+}
+
+function setInterface(obj){
+	if(obj.cat) {
+		$('.cat>li').removeClass('selected');
+		$('.cat .cat_'+obj.cat).addClass('selected');
+		$('#search').attr('class','').addClass('cat_'+obj.cat);
+		$('#type').val(obj.cat);
+	} else {
+		$('.cat>li').removeClass('selected');
+		$('.nav .cat_all').addClass('selected');
+		$('#search').attr('class','');
+	}
+	if(obj.terms)
+		$('#search').val(obj.terms.split("+").join(" "));
+	else
+		$('#search').val('');
+}
+
+function url2hash(url){
+	var page = url.toString().match(/page=([0-9]{1,2})/);
+	var cat = url.toString().match(/(?:cat|type)=([0-9]{1,2})/);
+	var terms = url.toString().match(/terms=(.*?)(?:\&|$)/);
+
+	if(page) page = page[1];
+	if(cat) cat = cat[1];
+	if(terms) terms = terms[1];
+
+	var hash = "#/" + (cat?catlist[cat]:catlist[0]) + "/" + (page?page:(terms?1:0)) + (terms?'/'+terms:'');
+	return {url:url,hash:hash,page:page,cat:cat,terms:terms};
+}
+
+function hash2url(hash){
+	var loadVars = hash.split('/'), cat, terms, page, hash;
+	cat = catlist.indexOf(loadVars[1]);
+	page = loadVars[2];
+	terms = (loadVars[3]?loadVars[3]:false);
+	url = '/'+(terms?'search.php?':'?')+(terms?'type=':'cat=')+cat+'&page='+page+(terms?'&terms='+terms:'');
+
+	return {url:url,hash:hash,page:page,cat:cat,terms:terms};
 }
 
 
