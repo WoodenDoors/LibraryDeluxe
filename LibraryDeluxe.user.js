@@ -58,6 +58,7 @@ if(hash=='' && window.location.search.length>0){
 	window.location.hash = url2hash(window.location.search).hash;
 } else {
 	//TODO: set at least the page num correctly
+	setInterface(hash2url(hash));
 }
 
 // add CSS from external source for easier editing in the browser
@@ -89,6 +90,12 @@ $('body>p.footer').before(
 		<section id='right_panel'>\
 			<div class='nav'>\
 				<ul class='hot'></ul>\
+			</div>\
+			<div class='nav'>\
+				<ul class='pages'>\
+					<li class='prevpage'><a>Prev Page</a></li>\
+					<li class='nextpage'><a>Next Page</a></li>\
+				</ul>\
 			</div>\
 		</section>\
 		<div class='clearfix'></div>\
@@ -143,16 +150,16 @@ if(window.localStorage.getItem("skip_opening")){
 	$(document).ready(function() {
 		console.log([hash, hash.length>0]);
 		if(hash.length>0){
-			ajaxLoadTT(hash);
+			ttAjaxLoad(hash);
 		} else {
-			spawnTiles(getTTlist(document.body));
+			spawnTiles(ttGetList(document.body));
 		}
 	});
 		
 }
 else {
 	$(document).ready(function(){
-		var ttlist = getTTlist(document.body);
+		var ttlist = ttGetList(document.body);
 		// fancy openings sequence
 		var openingSequence = new TimelineLite({onComplete:initInterface, onCompleteParams:[ttlist]});
 		openingSequence.append(TweenMax.to($('#main'),1,{width:1140}));
@@ -167,8 +174,9 @@ else {
 
 
 /* --------------------------------------------------------
- * Event Listeners
+ * EVENTS
  * ------------------------------------------------------ */
+
 // Scroll Event
 $(window).scroll(scrollTiles);
 $(window).resize(scrollTiles);
@@ -188,9 +196,10 @@ $('.nav a').bind('click',function(e){
 		e.preventDefault();
 		$('.cat>li').removeClass('selected');
 		$(this).parent().addClass('selected');
-		ajaxLoadTT($(this).attr('href'));
+		ttAjaxLoad($(this).attr('href'));
 	}
 });
+
 
 // Search Button events
 var searchLength=0;
@@ -210,7 +219,7 @@ $('#search').focus(function(){
 		if(!n) n = $(this).val().match(/ ?([a-z\-]*)[@!#:]{1}/i);
 		if(n){
 			type = catlist.indexOf(n[1].toLowerCase());
-			if(type){
+			if(~type){
 				$('#type').val(type);
 				$(this).val($(this).val().replace(n[0],''));
 				$(this).attr('class','');
@@ -220,30 +229,28 @@ $('#search').focus(function(){
 		}
 	}
 	searchLength = $(this).val().length;
-});
-$('.searchfield>form').submit(function(e){
+}).parent().submit(function(e){
 	console.log('Submitting: '+$(this).serialize());
-	ajaxLoadTT('/search.php?'+$(this).serialize());
+	ttAjaxLoad('/search.php?'+$(this).serialize());
 	return false;
 });
 
+// Key button Events
 var unsafe_keys = ['16', '9', '18', '32', '17', '37', '40', '39', '38'];
 $(window).keydown(function(e){
-	//TODO: Catch some keys they shouldn't focus like ctrl, shift, space, etc.
-	console.log(e.which);
-
-	if(unsafe_keys.indexOf(e.which.toString())==-1 && (document.activeElement != $('#search')[0])) {
+	if(!~unsafe_keys.indexOf(e.which.toString()) && (document.activeElement != $('#search')[0])) {
 		$('#search')[0].focus();
 	}
 });
 
 
-// page change event
+// hash change event
 setInterval(hashCheck,100);
 
 
 $('#header h1').click(function(){window.location = 'index.php'});
 
+// clickEvent to iFrame
 function openInIframe(e){
 	if(e.which==1){ 
 		e.preventDefault();
@@ -252,13 +259,20 @@ function openInIframe(e){
 }
 
 
-
-
-
-
 /* --------------------------------------------------------
- * Functions
+ * SETTINGS DEPENDENT FUNCTIONS
  * ------------------------------------------------------ */
+
+function openIframe(url){
+	$('.overlay').show();
+	$('.overlay>#website').attr('src',url);
+	$('.overlay').click(function(){$(this).hide();});
+}
+
+function skipOpening(bool){
+	window.localStorage.setItem("skip_opening", bool);
+}
+
 function isOnScreen(elem){
 	var docViewTop = $(window).scrollTop();
 	var docViewBottom = docViewTop + $(window).height();
@@ -269,6 +283,10 @@ function isOnScreen(elem){
 	return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
 }
 
+
+/* --------------------------------------------------------
+ * INTERFACE FUNCTIONS
+ * ------------------------------------------------------ */
 function initInterface(list){
 	skipOpening(true);
 	TweenMax.from($('#header'),1,{opacity:0});
@@ -288,9 +306,41 @@ function initInterface(list){
 		spawnTiles(list);
 }
 
-function skipOpening(bool){
-	window.localStorage.setItem("skip_opening", bool);
+function setInterface(obj){
+
+	// set category of query to interface
+	if(obj.cat) {
+		$('.cat>li').removeClass('selected');
+		$('.cat .cat_'+obj.cat).addClass('selected');
+		$('#search').attr('class','').addClass('cat_'+obj.cat);
+		$('#type').val(obj.cat);
+	} else {
+		$('.cat>li').removeClass('selected');
+		$('.nav .cat_all').addClass('selected');
+		$('#search').attr('class','');
+	}
+
+	// enter searchterms of last query
+	if(obj.terms)
+		$('#search').val(obj.terms.split("+").join(" "));
+	else
+		$('#search').val('');
+
+	// set next/prev buttons
+	if(obj.page) {
+		var backurl, fwdurl;
+		if(obj.page > 1 || (!obj.terms && obj.page > 0)) {
+			backurl = '/'+(obj.terms?'search.php?type=':'?cat=')+obj.cat+'&page='+(obj.page-1)+(obj.terms?'&terms='+obj.terms:'');
+			$('.prevpage').show().find('a').attr('href',backurl);
+		} else {
+			$('.prevpage').hide();
+		}
+		fwdurl = '/'+(obj.terms?'search.php?type=':'?cat=')+obj.cat+'&page='+(obj.page+1)+(obj.terms?'&terms='+obj.terms:'');
+		$('.nextpage a').attr('href',fwdurl);
+	}
 }
+
+
 
 function createTile(a,t){
 	var tile = $(
@@ -313,7 +363,7 @@ function createTile(a,t){
 			<a class="details"><span class="sprite_details"></span></a>\
 		</div>'
 		);
-	*/
+	//*/
 
 	/**
 	 * Conditional Stuff
@@ -343,7 +393,7 @@ function createTile(a,t){
 		metadiv.append("<span class='extra'>"+a.extras.join("</span><span class='extra'>")+"</span>");
 	
 	if(a.resolution.length>0){
-		//var res = a.resolution[0].replace(/^[0-9]{3,4}X([0-9]{3,4})/i,"$1P");		// trim those long definitions
+		//var res = a.resolution[0].replace(/^[0-9]{3,4}X([0-9]{3,4})/i,"$1P");		// trims those long definitions
 		metadiv.append("<span class='resolution'>"+a.resolution[0]+"</span>");
 	}
 	if(a.videoType.length>0)
@@ -433,10 +483,12 @@ function spawnTiles(list){
 	};
 }
 
+
+
 /* --------------------------------------------------------
- * Getting the TokyoTosho list of the current page
+ * TT FUNCTIONS
  * ------------------------------------------------------ */
-function getTTlist(from){	// 'from': prepared for ajax requests
+function ttGetList(from){	// 'from': prepared for ajax requests
 	var ttlist = [];
 	$('.listing tr',from).each(function(){
 		var top = $(this).find('.desc-top'),
@@ -455,67 +507,52 @@ function getTTlist(from){	// 'from': prepared for ajax requests
 			ttlist.push(ttItem);
 		} 
 		else if(bot.length > 0){
-			ttlist[ttlist.length-1].meta = ttmetaParse(bot.html());
+			ttlist[ttlist.length-1].meta = ttMetaParse(bot.html());
 			ttlist[ttlist.length-1].stats = sts.html();
 		}
 	});
 	return ttlist;
 }
 
-function ttmetaParse(meta){
-	var a = meta.split(" | Comment: ");
-	var b = a[0].split(" | ");
-	var c,d,e;
-	//console.log(b);
+function ttMetaParse(meta){
+	var a = meta.split(" | Comment: "),b=a[0].split(" | "),c,d,e;
+
 	var metadata = {
-		"auth":0,
-		"comment":a[1]?a[1]:"",
-		"submitter":"",
-		"size":"0kb",
-		"date":""
+		"auth"		:0,
+		"comment"	:(a[1]?a[1]:""),
+		"submitter"	:"",
+		"size"		:"0kb",
+		"date"		:""
 	};
 
 	for (var i = 0; i < b.length; i++) {
-		if(b[i].match(/Authorized:.*?auth_ok/)) {
-			metadata.auth = 1;
-		}
-		if(b[i].match(/Authorized:.*?auth_bad/)) {
-			metadata.auth = 2;
-		}
-		if(b[i].match(/Submitter:/)) {
-			metadata.submitter = b[i].split(/ ?Submitter: /)[1];
-
-		} else if(b[i].indexOf('Size:') > -1){
-			metadata.size = b[i].replace("Size: ", "");
-
-		} else if(b[i].indexOf('ago') > -1) {
-			metadata.date = b[i];
-		} else {
+		if(b[i].match(/Authorized:.*?auth_ok/))  	metadata.auth = 1;
+		if(b[i].match(/Authorized:.*?auth_bad/))	metadata.auth = 2;
+		if(b[i].match(/Submitter:/)) 				metadata.submitter = b[i].split(/ ?Submitter: /)[1];
+		else if(~b[i].indexOf('Size:')) 			metadata.size = b[i].replace("Size: ", "");
+		else if(~b[i].indexOf('ago'))				metadata.date = b[i];
+		
+		else {
 			c = b[i].split(' ');
 			d = c[2].split(':');
 			c = c[1].split('-');
 			e = Date.UTC(c[0],c[1]-1,c[2],d[0],d[1]);
 			var now = new Date();
 			d = now-e;
-			if(Math.floor(d/(24 * 60 * 60 * 1000)) > 1) {							//days
-				metadata.date = Math.floor(d/(24 * 60 * 60 * 1000)) + " days ago";
-			} else if(Math.floor(d/(24 * 60 * 60 * 1000)) > 0) {					//day
-				metadata.date = "1 day ago";
-			} else if(Math.floor(d/(60 * 60 * 1000)) > 1) {							//hours
-				metadata.date = Math.floor(d/(60 * 60 * 1000)) + " hours ago";
-			} else if(Math.floor(d/(60 * 60 * 1000)) > 0) {							//hour
-				metadata.date = "1 hour ago";
-			} else if(Math.floor(d/(60 * 1000)) > 0) {								// minutes
-				metadata.date = "some min ago";
-			} else {
-				metadata.date = "some sec ago";
-			}
+
+			if(Math.floor(d/8640000) > 1)			metadata.date = Math.floor(d/8640000) + " days ago";
+			else if(Math.floor(d/8640000) > 0)		metadata.date = "1 day ago";
+			else if(Math.floor(d/360000) > 1)		metadata.date = Math.floor(d/360000) + " hours ago";
+			else if(Math.floor(d/360000) > 0) 		metadata.date = "1 hour ago";
+			else if(Math.floor(d/60000) > 0) 		metadata.date = "some min ago";
+			else 									metadata.date = "some sec ago";
+			
 		}
 	};
 	return metadata;
 }
 
-function ajaxLoadTT(url){
+function ttAjaxLoad(url){
 	$('#libview').empty().append('<span class="loading msg">Loading Content...</span>');
 	console.log('trying to load: '+url);
 	isLoading = true;
@@ -532,7 +569,7 @@ function ajaxLoadTT(url){
 	$('#loader').empty().load(loadVars.url + " .listing",function(){
 		isLoading = false;
 		$('#libview .loading').remove();
-		var loaded_list = getTTlist($('#loader'));
+		var loaded_list = ttGetList($('#loader'));
 		if(loaded_list.length > 0){
 			spawnTiles(loaded_list);
 		} else {
@@ -541,45 +578,19 @@ function ajaxLoadTT(url){
 	});
 }
 
+
+/* --------------------------------------------------------
+ * HASHING FUNCTIONS
+ * ------------------------------------------------------ */
 function hashCheck()
 {
-    if (location.hash != hash)
-    {
-        console.log("Changed from " + hash + " to " + location.hash);
-        // #/$type|$cat/$page/$terms
-
-        hash = location.hash;
-
-        var loadVars;
-        if(hash.indexOf('#')>=0){
-        	loadVars = hash2url(hash);
-        } else {
-        	loadVars = url2hash(window.location.search);
-        }
-        console.log(loadVars);
-
+    if (location.hash != hash) {
+        hash = window.location.hash;
+        var loadVars = ~hash.indexOf('#') ? hash2url(hash) : url2hash(window.location.search);
 		setInterface(loadVars);
-		// see if this is init by loader
         if(!isLoading)
-        	ajaxLoadTT(loadVars.url);
+        	ttAjaxLoad(loadVars.url);
     }
-}
-
-function setInterface(obj){
-	if(obj.cat) {
-		$('.cat>li').removeClass('selected');
-		$('.cat .cat_'+obj.cat).addClass('selected');
-		$('#search').attr('class','').addClass('cat_'+obj.cat);
-		$('#type').val(obj.cat);
-	} else {
-		$('.cat>li').removeClass('selected');
-		$('.nav .cat_all').addClass('selected');
-		$('#search').attr('class','');
-	}
-	if(obj.terms)
-		$('#search').val(obj.terms.split("+").join(" "));
-	else
-		$('#search').val('');
 }
 
 function url2hash(url){
@@ -587,7 +598,7 @@ function url2hash(url){
 	var cat = url.toString().match(/(?:cat|type)=([0-9]{1,2})/);
 	var terms = url.toString().match(/terms=(.*?)(?:\&|$)/);
 
-	if(page) page = page[1];
+	if(page) page = parseInt(page[1]);
 	if(cat) cat = cat[1];
 	if(terms) terms = terms[1];
 
@@ -598,18 +609,18 @@ function url2hash(url){
 function hash2url(hash){
 	var loadVars = hash.split('/'), cat, terms, page, hash;
 	cat = catlist.indexOf(loadVars[1]);
-	page = loadVars[2];
+	page = parseInt(loadVars[2]);
 	terms = (loadVars[3]?loadVars[3]:false);
-	url = '/'+(terms?'search.php?':'?')+(terms?'type=':'cat=')+cat+'&page='+page+(terms?'&terms='+terms:'');
+	url = '/'+(terms?'search.php?type=':'?cat=')+cat+'&page='+page+(terms?'&terms='+terms:'');
 
 	return {url:url,hash:hash,page:page,cat:cat,terms:terms};
 }
 
 
-/* --------------------------------------------------------
- * Getting Data from the MAL DB for giggles and funzies
- * ------------------------------------------------------ */
 
+/* --------------------------------------------------------
+ * MAL FUNCTIONS (hihihi)
+ * ------------------------------------------------------ */
 function searchMalData(anime,cb){
 	var result={};
 	result.hashCode = anime.cleanTitle.hashCode();
@@ -641,12 +652,6 @@ function searchMalData(anime,cb){
 		result.data.image_url = result.data.image_url.replace(/t(\.[jpg|png|gif]{3})$/i, "$1");
 		cb(result);
 	});
-}
-
-function openIframe(url){
-	$('.overlay').show();
-	$('.overlay>#website').attr('src',url);
-	$('.overlay').click(function(){$(this).hide();});
 }
 
 function saveMALdata(){

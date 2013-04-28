@@ -283,6 +283,7 @@ text-align: center;
 }
 
 #website{
+	background-color: #fff;
 	display: block;
 	height: 80%;
 	margin: 50px auto;

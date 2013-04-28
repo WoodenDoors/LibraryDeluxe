@@ -15,31 +15,24 @@ Work in Progress (what's missing)
 ================================
 
 ### TT interface
-
-* next/prev 75 buttons
 * Forum, wiki, login
-* Textures
 * Wallpapers
 * Show TT news
 * Better screensize adaptation
 
 ### Tile
-
 * add details (link) to tile
 * magnet link
 * MAL ratings
 * combine alike matches (480p 720p 1080p by horriblesubs for example)
 
 ### MAL requests
-
 * MAL Type==Extra_unsafe check
 
 ### Ajax actions
-
 * Endless Scroller
 
 ### User Settings menu
-
 * hide h-content
 * turn off animations
 * turn on opening sequence
