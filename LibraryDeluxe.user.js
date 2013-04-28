@@ -45,6 +45,7 @@ String.prototype.distanceTo = function(a){
 
 
 
+
 /* --------------------------------------------------------
  * DOM Manipulations from here on
  * ------------------------------------------------------ */
@@ -124,18 +125,6 @@ $('div.nav>ul.cat').append(
 	 <li class="cat_5"><a href="/?cat=5">Other</a></li>'
 );
 
-// add page information to the new interface
-/*if(page_cat) {
-	$('.nav .cat_'+page_cat[1]).addClass('selected');
-	$('#search').addClass('cat_'+page_cat[1]);
-	$('#type').val(page_cat[1]);
-} else {
-	$('.nav .cat_all').addClass('selected');
-}
-
-if(page_search){
-	$('#search').val(decodeURIComponent(page_search[1]).replace('+',' ').toLowerCase());
-}*/
 
 var libview = $('#libview'),
 	MALdata = {};
@@ -143,7 +132,6 @@ var libview = $('#libview'),
 // loading cached anime-data from localstorage
 loadMALdata();
 
-// loading settings from localstorage
 // skip opening if nessesary
 if(window.localStorage.getItem("skip_opening")){
 	initInterface(false);
@@ -180,6 +168,57 @@ else {
 // Scroll Event
 $(window).scroll(scrollTiles);
 $(window).resize(scrollTiles);
+
+// Search Button events
+var searchLength=0;
+$('#search').focus( function(){	$(this).attr('placeholder','');})
+			.blur(  function(){	$(this).attr('placeholder','Search');})
+			.change(function(){	console.log($(this).val());})
+			.keyup(searchMagic)
+			.parent()
+			.submit(function(e){
+								console.log('Submitting: '+$(this).serialize());
+								ttAjaxLoad('/search.php?'+$(this).serialize());
+								return false;
+});
+
+// Key button Events
+var unsafe_keys = ['16', '9', '18', '32', '17', '37', '40', '39', '38'];
+$(window).keydown(function(e){
+	if(!~unsafe_keys.indexOf(e.which.toString()) && (document.activeElement != $('#search')[0])) {
+		$('#search')[0].focus();
+	}
+});
+
+// hash change event
+setInterval(hashCheck,100);
+
+// click events
+$('.nav a').bind('click',ajaxInTT);
+$('#header h1').click(function(){window.location = 'index.php'});
+
+
+
+
+/* --------------------------------------------------------
+ * EVENT RELATED FUNCTIONS
+ * ------------------------------------------------------ */
+
+// clickEvent to iFrame
+function openInIframe(e){
+	if(e.which==1){ 
+		e.preventDefault();
+		openIframe($(this).attr('href'));
+	}
+}
+
+function ajaxInTT(e){
+	if(e.which==1){
+		e.preventDefault();
+		ttAjaxLoad($(this).attr('href'));
+	}
+}
+
 function scrollTiles() {
 	var i = 0;
 	$('#libview .waitForAnimation').each(function(){
@@ -191,25 +230,7 @@ function scrollTiles() {
 	});
 };
 
-$('.nav a').bind('click',function(e){
-	if(e.which==1){
-		e.preventDefault();
-		$('.cat>li').removeClass('selected');
-		$(this).parent().addClass('selected');
-		ttAjaxLoad($(this).attr('href'));
-	}
-});
-
-
-// Search Button events
-var searchLength=0;
-$('#search').focus(function(){
-	$(this).attr('placeholder','');
-}).blur(function(){
-	$(this).attr('placeholder','Search');
-}).change(function(){
-	console.log($(this).val());
-}).keyup(function(e){
+function searchMagic(e){
 	var type,n; 
 	if(searchLength===0 && e.which===8){
 		$('#type').val('');
@@ -224,38 +245,12 @@ $('#search').focus(function(){
 				$(this).val($(this).val().replace(n[0],''));
 				$(this).attr('class','');
 				$(this).addClass('cat_'+type);
-				$('.cat>li').removeClass('selected').parent().find('.cat_'+type).addClass('selected');
+				$('.cat>li').removeClass('selected')
+					.parent().find('.cat_'+type).addClass('selected');
 			}
 		}
 	}
 	searchLength = $(this).val().length;
-}).parent().submit(function(e){
-	console.log('Submitting: '+$(this).serialize());
-	ttAjaxLoad('/search.php?'+$(this).serialize());
-	return false;
-});
-
-// Key button Events
-var unsafe_keys = ['16', '9', '18', '32', '17', '37', '40', '39', '38'];
-$(window).keydown(function(e){
-	if(!~unsafe_keys.indexOf(e.which.toString()) && (document.activeElement != $('#search')[0])) {
-		$('#search')[0].focus();
-	}
-});
-
-
-// hash change event
-setInterval(hashCheck,100);
-
-
-$('#header h1').click(function(){window.location = 'index.php'});
-
-// clickEvent to iFrame
-function openInIframe(e){
-	if(e.which==1){ 
-		e.preventDefault();
-		openIframe($(this).attr('href'));
-	}
 }
 
 
@@ -327,17 +322,15 @@ function setInterface(obj){
 		$('#search').val('');
 
 	// set next/prev buttons
-	if(obj.page) {
-		var backurl, fwdurl;
-		if(obj.page > 1 || (!obj.terms && obj.page > 0)) {
-			backurl = '/'+(obj.terms?'search.php?type=':'?cat=')+obj.cat+'&page='+(obj.page-1)+(obj.terms?'&terms='+obj.terms:'');
-			$('.prevpage').show().find('a').attr('href',backurl);
-		} else {
-			$('.prevpage').hide();
-		}
-		fwdurl = '/'+(obj.terms?'search.php?type=':'?cat=')+obj.cat+'&page='+(obj.page+1)+(obj.terms?'&terms='+obj.terms:'');
-		$('.nextpage a').attr('href',fwdurl);
+	var backurl, fwdurl;
+	if(obj.page > 1 || (!obj.terms && obj.page > 0)) {
+		backurl = '/'+(obj.terms?'search.php?type=':'?cat=')+obj.cat+'&page='+(obj.page-1)+(obj.terms?'&terms='+obj.terms:'');
+		$('.prevpage').show().find('a').attr('href',backurl);
+	} else {
+		$('.prevpage').hide();
 	}
+	fwdurl = '/'+(obj.terms?'search.php?type=':'?cat=')+obj.cat+'&page='+(obj.page+1)+(obj.terms?'&terms='+obj.terms:'');
+	$('.nextpage a').attr('href',fwdurl);
 }
 
 
@@ -345,11 +338,11 @@ function setInterface(obj){
 function createTile(a,t){
 	var tile = $(
 	"<div class='tile "+t.category+"'>\
-		<a><img class='thumb' width='50' /></a>\
+		<a class='thumb'><img width='50' /><span class='score'></span></a>\
 		<h2 class='title'>\
 			<a href='"+t.link+"' title='"+a.filename+"'>"+a.title+"</a>\
 		</h2>\
-		<h3 class='group'>"+(a.group ? a.group : "[uknown group]")+"</h3>\
+		<h3 class='group'>"+(a.group!='' ? a.group : "[unknown group]")+"</h3>\
 		<div class='comment'>"+t.meta.comment+"</div>\
 		<div class='ribbon'></div>\
 		<div class='meta'></div>\
@@ -374,11 +367,13 @@ function createTile(a,t){
 	//.website-icon
 	var links = $('<div>'+t.web+'</div>').find('a');
 	if(links.length==2)
-		tile.find('.group').append($(links[0]).attr('title','Website').html('<img style="position:relative;top:2px;left:2px;" width="13" src="data:image/gif;base64,R0lGODlhEAAQALMAAAAAAP///19vj9Ha7B1ChKezxr/I13mOrpGjuTRLY/v8/bCztf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQABAAAARUkMlJq704az0K+obUfUjBdIOiGEfhpmtbDEgiuK5R2MgiIIqETqUaDAQGxCABFBaICiNSmZghDgiCVpvALhAC2sJ4+H1mgzKCwRLYTOwyb0Ov2+8RADs=">'));
+		tile.find('.group').html($(links[0]).html(tile.find('.group').html()));
+
+		//.html('<img style="position:relative;top:2px;left:2px;" width="13" src="data:image/gif;base64,R0lGODlhEAAQALMAAAAAAP///19vj9Ha7B1ChKezxr/I13mOrpGjuTRLY/v8/bCztf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQABAAAARUkMlJq704az0K+obUfUjBdIOiGEfhpmtbDEgiuK5R2MgiIIqETqUaDAQGxCABFBaICiNSmZghDgiCVpvALhAC2sJ4+H1mgzKCwRLYTOwyb0Ov2+8RADs=">'));
 	
 	// insert Contributor
 	if(t.meta.submitter != "Anonymous")
-		tile.find(".group").append(" <small title='Submitter'>("+t.meta.submitter+")</small>");
+		tile.find(".group").attr("title", "Submitter: "+$(t.meta.submitter).html());
 	
 	if(t.meta.auth>0)
 		tile.find(".group").addClass((t.meta.auth==1?"auth_ok":"auth_bad"));
@@ -386,25 +381,15 @@ function createTile(a,t){
 	// add meta tags
 	var metadiv = tile.find(".meta").append("<span class='size'>"+t.meta.size+"</span>");
 
-	if(a.extras_unsafe.length>0)
-		metadiv.append("<span class='extra_unsafe'>"+a.extras_unsafe.join("</span><span class='extra_unsafe'>")+"</span>");
+	var meta = ['extras_unsafe','extras','resolution','videoType','audioType'];
+	for (var i = 0; i < meta.length; i++) {
+		if(a[meta[i]].length>0){
+			metadiv.append("<span class='"+meta[i]+"'>"+a[meta[i]].join("</span><span class='"+meta[i]+"'>")+"</span>");
+		}
+	};
 
-	if(a.extras.length>0)
-		metadiv.append("<span class='extra'>"+a.extras.join("</span><span class='extra'>")+"</span>");
-	
-	if(a.resolution.length>0){
-		//var res = a.resolution[0].replace(/^[0-9]{3,4}X([0-9]{3,4})/i,"$1P");		// trims those long definitions
-		metadiv.append("<span class='resolution'>"+a.resolution[0]+"</span>");
-	}
-	if(a.videoType.length>0)
-		metadiv.append("<span class='video'>"+a.videoType.join("</span><span class='video'>")+"</span>");
-	
-	if(a.audioType.length>0)
-		metadiv.append("<span class='audio'>"+a.audioType.join("</span><span class='audio'>")+"</span>");
-	
 	if(a.version != undefined)
 		tile.find('.ribbon').append("<div class='version'>"+a.version+"</div>");
-
 	// open Nyaa tracker in iframe
 	if(t.link.indexOf('nyaa.eu/')>-1){
 		$('.title>a',tile).bind('click',openInIframe);
@@ -446,12 +431,14 @@ function spawnTiles(list){
 			// append to libview
 			$(libview).append(tile);
 
+			// onscreen Animation
 			if(isOnScreen($('.tile:last',libview))){
 				TweenMax.from(tile,.5,{	delay:j*.2 + 1, opacity:0, y:200});
 			} else {
 				tile.addClass('waitForAnimation');
 			}
 
+			// MAL DATA
 			if(!MALdata[hashCode]){
 				MALdata[hashCode] = "loading!";
 				searchMalData(a,function(result){
@@ -461,23 +448,25 @@ function spawnTiles(list){
 					} else {
 						MALdata[result.hashCode] = result.data;
 						saveMALdata();
-						$(".tile[data-name="+result.hashCode+"] .thumb")
+						$(".tile[data-name="+result.hashCode+"] .thumb img")
 							.attr('src',result.data.image_url)
 							.parent() // <a> container
 							.attr('href','http://myanimelist.net/anime/'+result.data.id)
-							.bind('click',openInIframe);
+							.bind('click',openInIframe)
+							.find('.score').html(result.data.members_score);
 					}
 				});
-			} else if(MALdata[hashCode] === "loading!"){
+			//} else if(MALdata[hashCode] === "loading!"){
 				//console.log('waiting for loading...');
-			} else if(MALdata[hashCode] === "no result!"){
+			//} else if(MALdata[hashCode] === "no result!"){
 				//TODO: try another time
 			} else {
-				$(".thumb",tile)
+				$(".thumb img",tile)
 					.attr('src', MALdata[hashCode].image_url)
 					.parent()
 					.attr('href','http://myanimelist.net/anime/'+MALdata[hashCode].id)
-					.bind('click',openInIframe);
+					.bind('click',openInIframe)
+					.find('.score').html(MALdata[hashCode].members_score);
 			}
 		}
 	};
@@ -599,10 +588,11 @@ function url2hash(url){
 	var terms = url.toString().match(/terms=(.*?)(?:\&|$)/);
 
 	if(page) page = parseInt(page[1]);
+	else page = terms?1:0;
 	if(cat) cat = cat[1];
 	if(terms) terms = terms[1];
 
-	var hash = "#/" + (cat?catlist[cat]:catlist[0]) + "/" + (page?page:(terms?1:0)) + (terms?'/'+terms:'');
+	var hash = "#/" + (cat?catlist[cat]:catlist[0]) + "/" + page + (terms?'/'+terms:'');
 	return {url:url,hash:hash,page:page,cat:cat,terms:terms};
 }
 
@@ -633,9 +623,9 @@ function searchMalData(anime,cb){
 			var distance = 100;
 			// finding the closest match
 			for (var i = data.length - 1; i >= 0; i--) { 
-				var levDis = anime.title.distanceTo(data[i].title);
-				if(levDis < distance){
-					distance = levDis;
+				var x = anime.title.distanceTo(data[i].title);
+				if(x < distance){
+					distance = x;
 					result.data = data[i];
 				}
 			}

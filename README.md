@@ -16,14 +16,12 @@ Work in Progress (what's missing)
 
 ### TT interface
 * Forum, wiki, login
-* Wallpapers
 * Show TT news
 * Better screensize adaptation
 
 ### Tile
 * add details (link) to tile
 * magnet link
-* MAL ratings
 * combine alike matches (480p 720p 1080p by horriblesubs for example)
 
 ### MAL requests
@@ -37,9 +35,9 @@ Work in Progress (what's missing)
 * turn off animations
 * turn on opening sequence
 * exclude terms
+* Wallpapers
 
 ### Recognition
-
 * Parse Manga differently | v02ch12 etc
 * Parse Music differently | flac 256kb etc
 * Parse Games differently | win

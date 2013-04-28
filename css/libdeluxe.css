@@ -140,6 +140,9 @@ border-right: 4px solid;
 	margin: 0;
 	text-align: left;
 }
+.tile .group a{
+	color:inherit;
+}
 .tile .group.auth_ok {color:green;}
 .tile .group.auth_bad {color:red;}
 
@@ -152,6 +155,23 @@ border-right: 4px solid;
 }
 
 .tile .thumb { float: right; margin-left: 4px;}
+
+.tile .thumb .score {
+display: none;
+position: absolute;
+bottom: 5px;
+right: 3px;
+color: #FFF;
+background-color: #001969;
+font-weight: bold;
+font-size: 9px;
+padding: 3px 6px;
+border-radius: 4px;
+}
+
+.tile .thumb:hover .score {
+display: block;
+}
 
 .tile .ribbon {
 	overflow: hidden;
@@ -211,12 +231,12 @@ text-align: center;
 	position: relative;
 	top: 1px;
 }
-.tile .meta .size {			border-color: #2D2D2D;	color: #2D2D2D;}
-.tile .meta .extra_unsafe {	border-color: #611B6A;	color: #611B6A;}
-.tile .meta .extra {		border-color: #53708A;	color: #53708A;}
-.tile .meta .resolution {	border-color: #7E4A47;	color: #7E4A47;}
-.tile .meta .video {		border-color: #957F5E;	color: #957F5E;}
-.tile .meta .audio {		border-color: #649A79;	color: #649A79;}
+.tile .meta .audioType 		{border-color: #649A79;	color: #649A79;}
+.tile .meta .extras_unsafe 	{border-color: #611B6A;	color: #611B6A;}
+.tile .meta .extras 		{border-color: #53708A;	color: #53708A;}
+.tile .meta .resolution 	{border-color: #7E4A47;	color: #7E4A47;}
+.tile .meta .size 			{border-color: #2D2D2D;	color: #2D2D2D;}
+.tile .meta .videoType 		{border-color: #957F5E;	color: #957F5E;}
 
 /* Animation Properties 
  * ----------------------------------------------------------- */
