@@ -54,6 +54,7 @@ String.prototype.distanceTo = function(a){
 var catlist= ['all','anime','music','manga','hentai','other','other','raws','drama','musicvideo','non-english','batch','h-anime','h-manga','h-game','jav'];
 var hash = location.hash;
 var isLoading = false;
+var newsVisible = false;
 console.log(window.location);
 if(hash=='' && window.location.search.length>0){
 	window.location.hash = url2hash(window.location.search).hash;
@@ -63,7 +64,10 @@ if(hash=='' && window.location.search.length>0){
 }
 
 // add CSS from external source for easier editing in the browser
-$('head').append('<link rel="stylesheet" href="http://www.thekohrs.net/mal/tt/libdeluxe.css" type="text/css" />');
+// local-dev:	chrome-extension://lkkhemjoinjldfejnpknebklfdedenae/css/libdeluxe.css
+// production: 	http://www.thekohrs.net/mal/tt/libdeluxe.css
+$('head')
+	.append('<link rel="stylesheet" href="http://www.thekohrs.net/mal/tt/libdeluxe.css" type="text/css" />');
 
 // Loader for ajax calls
 $('#main').append('<div id="loader"></div>');
@@ -77,6 +81,11 @@ $('body>p.footer').before(
 					<input  id='search' type='text' name='terms' placeholder='Search' />\
 					<input type='submit' style='position: absolute; left: -9999px; width: 1px; height: 1px;' />\
 				</form>\
+			</div>\
+			<div class='iconBar'>\
+				<ul>\
+				<li class='iconBarItem newsIcon' title='show news'>News</li>\
+				</ul>\
 			</div>\
 	</div>\
 	<div id='wrapper'>\
@@ -196,9 +205,14 @@ setInterval(hashCheck,100);
 // click events
 $('.nav a').bind('click',ajaxInTT);
 $('#header h1').click(function(){window.location = 'index.php'});
-
-
-
+$('.newsIcon').on('click', function(){
+	if(newsVisible) {
+		$('#header>ul.news').slideDown();
+	} else {
+		$('#header>ul.news').slideUp();
+	}
+	newsVisible = !newsVisible;
+});
 
 /* --------------------------------------------------------
  * EVENT RELATED FUNCTIONS
@@ -291,7 +305,8 @@ function initInterface(list){
 		.append($("#main>h1"))
 		.append($("#main>div.centertext"))
 		.append($("#main>h3"))
-		.append($(".searchfield"));
+		.append($(".searchfield"))
+		.append($("#main>ul.news"));
 	
 	$('.dcenter>a[href^="search.php?terms="]').each(function(){
 		$("<li></li>").append(this).appendTo('div.nav>ul.hot');

@@ -29,6 +29,44 @@ body.init > #main { display: none; }
 	text-shadow: -1px 1px 1px #fff;
 }
 
+#header>h1 {
+	margin: 0 300px;
+	cursor: pointer;
+}
+
+#header>ul.news {
+	margin: 15px 100px;
+	padding: 10px;
+	border-radius: 8px;
+	background: rgba(255,255,255,0.5);
+	box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+#header>ul.news>li {
+	padding: 5px 0;
+	width: 100%;
+}
+
+/* Icon Bar (only news so far, but intended to put icons for different view-choices here later)
+ * ----------------------------------------------------------- */
+
+.iconBar {
+	float: right;
+}
+
+li.iconBarItem {
+	width: 24px;
+	padding: 24px 0 0 0;
+	height: 0;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+li.newsIcon {
+	/* should replace the icon */
+	background: url("http://i.imgur.com/AuJj98r.png") no-repeat;
+}
+
 /* #LEFT_PANEL & #RIGHT_PANEL
  * ----------------------------------------------------------- */
 #left_panel, #right_panel{

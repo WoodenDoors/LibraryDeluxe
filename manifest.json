@@ -10,6 +10,7 @@
                             ],
         "run_at": "document_end"
     } ],
+    "web_accessible_resources": ["css/libdeluxe.css"],
     "converted_from_user_script": true,
     "description":  "Makes Tokyotosho into the most advanced Library for Japanese Media!",
     "name":         "Library Deluxe",
